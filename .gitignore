@@ -1,0 +1,20 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/TodoWebApp/FileContentIndex
+.vs/TodoWebApp/v17/TestStore/0/testlog.manifest
+**/bin/Debug/
+**/bin/Release/
+**/obj/Debug/
+**/obj/Release/
+**/bin/Debug/
+**/obj/Debug/
+**/obj/Release/
+*.suo
+*.cache
+**/.vs/**/DocumentLayout.json
+*.testlog
+*.v7.bin
+*.dtbcache.v2
+*.futdcache.v2

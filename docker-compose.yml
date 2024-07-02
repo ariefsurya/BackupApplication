@@ -1,0 +1,56 @@
+version: '3.4'
+
+services:
+  backupapi:
+    container_name: backupapi
+    image: backupapi
+    build:
+      context: .
+      dockerfile: BackupApi/Dockerfile
+    ports:
+      - "5001:443"
+      - "5000:80"
+    volumes:
+      - "C:/dev:/app/files"
+      - "C:/uploads:/app/uploads"
+      - "C:/Backups:/app/backups"
+    depends_on:
+      - rabbitmqbackup
+      - postgresbackupdb
+    networks:
+      - backup_app
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__PostgresConnection=Host=postgresbackupdb;Port=5432;Database=backupapp;Username=postgres;Password=postgres;Include Error Detail=true
+
+  rabbitmqbackup:
+    container_name: rabbitmqbackup
+    image: 'rabbitmq:3.13.3-management-alpine'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    deploy:
+      mode: replicated
+      replicas: 1
+    volumes:
+      - ./db-data/rabbitmq/:/var/db/rabbitmq/
+    networks:
+      - backup_app
+
+  postgresbackupdb:
+    container_name: postgresbackupdb
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=backupapp
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - ./Database/postgres/:/var/lib/postgresql/data/
+    networks:
+      - backup_app
+
+networks:
+  backup_app:
+    driver: bridge
