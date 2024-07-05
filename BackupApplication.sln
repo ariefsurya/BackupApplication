@@ -11,9 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleBackup", "ConsoleBac
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{2FA012ED-6E30-4A9F-B8DF-A9F26AE2B588}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Model", "Model\Model.csproj", "{E494FB89-4DF6-4B0F-81F3-3740F0D29DD5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Model", "Model\Model.csproj", "{E494FB89-4DF6-4B0F-81F3-3740F0D29DD5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackupWorkerService", "BackupWorkerService\BackupWorkerService.csproj", "{602A2302-B7BA-4340-A5EF-7DBF3BE73ACD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackupWorkerService", "BackupWorkerService\BackupWorkerService.csproj", "{602A2302-B7BA-4340-A5EF-7DBF3BE73ACD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "www.backupserver.com", "www.backupserver.com\www.backupserver.com.csproj", "{6EFEA0A3-56AB-48C1-BF4E-54C6DA422AF6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{602A2302-B7BA-4340-A5EF-7DBF3BE73ACD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{602A2302-B7BA-4340-A5EF-7DBF3BE73ACD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{602A2302-B7BA-4340-A5EF-7DBF3BE73ACD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EFEA0A3-56AB-48C1-BF4E-54C6DA422AF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EFEA0A3-56AB-48C1-BF4E-54C6DA422AF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EFEA0A3-56AB-48C1-BF4E-54C6DA422AF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EFEA0A3-56AB-48C1-BF4E-54C6DA422AF6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

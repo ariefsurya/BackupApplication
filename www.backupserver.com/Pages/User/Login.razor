@@ -1,0 +1,92 @@
+﻿@page "/login"
+
+@using www.backupserver.com.Repository
+@inject IAuthenticationRepository _authRepo
+@inject NavigationManager Navigation
+
+<div class="d-flex p-5">
+    <div class="w-50 fs-2 pe-5">
+        <div class="pb-4">My Todo Website</div>
+        <div>Welcome!</div>
+        <p>
+            Organize your task with Todo Web App.
+            Simple and Practice
+        </p>
+    </div>
+
+    <div class="w-50">
+        <h3 class="pb-4">Login</h3>
+        <EditForm Model="oUser" OnValidSubmit="Handlelogin" class="fs-5 pb-2">
+            @if (!string.IsNullOrEmpty(LoginErrorMessage))
+            {
+                <div class="text-danger fs-6">@LoginErrorMessage</div>
+            }
+            <div class="pb-2">
+                <label>Username</label>
+                <div>
+                    <InputText @bind-Value="oUser.Email" />
+                    @if (!string.IsNullOrEmpty(UsernameErrorMessage))
+                    {
+                        <div class="text-danger fs-6">@UsernameErrorMessage</div>
+                    }
+                </div>
+            </div>
+            <div class="pb-2">
+                <label>Password</label>
+                <div>
+                    <InputText @bind-Value="oUser.Password" />
+                    @if (!string.IsNullOrEmpty(PasswordErrorMessage))
+                    {
+                        <div class="text-danger fs-6">@PasswordErrorMessage</div>
+                    }
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success">Submit</button>
+        </EditForm>
+        <a href="register">&lt; Register New Account</a>
+    </div>
+</div>
+
+@code {
+    LoginDTO oUser = new LoginDTO();
+    string LoginErrorMessage = "";
+    string UsernameErrorMessage = "";
+    string PasswordErrorMessage = "";
+
+    protected async Task Handlelogin()
+    {
+        LoginErrorMessage = "";
+        UsernameErrorMessage = "";
+        PasswordErrorMessage = "";
+        bool isValid = await HandleValidation();
+
+        if (isValid)
+        {
+            var response = await _authRepo.HandleLogin(oUser);
+            if (response.Code != 200)
+            {
+                LoginErrorMessage = response.Data.ToString();
+                return;
+            }
+
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private async Task<bool> HandleValidation()
+    {
+        if (string.IsNullOrEmpty(oUser.Email))
+        {
+            UsernameErrorMessage = "Username cannot be empty";
+            return false;
+        }
+        else if (string.IsNullOrEmpty(oUser.Password))
+        {
+            PasswordErrorMessage = "Password cannot be empty";
+            return false;
+        }
+
+        return true;
+    }
+}

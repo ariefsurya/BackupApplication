@@ -123,10 +123,16 @@ namespace BackupWorkerService
             System.Threading.Thread.Sleep(1000); // Simulate time taken to backup
 
             _logger.LogInformation($"api history Backup of database '{oTargetBackup.SourceFilePath}' completed");
+            // Create an HttpClientHandler with custom certificate validation
+            HttpClientHandler handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
 
-            var httpClient = _httpClientFactory.CreateClient();
+            using HttpClient httpClient = new HttpClient(handler);
+            //var httpClient = _httpClientFactory.CreateClient(handler);
             var response = await httpClient.PostAsJsonAsync("https://localhost:5001/backup/sendBackupHistory", new BackupHistory{ 
-                CompanyId = _companyId,
+                CompanyId = Int32.Parse(_companyId.Replace("company-", "")),
                 SourceFilePath = oTargetBackup.SourceFilePath,
                 TargetFolderPath = oTargetBackup.TargetFolderPath
             });
@@ -145,13 +151,13 @@ namespace BackupWorkerService
         {
 
             // Define the source file path
-            string sourceFilePath = oTargetBackup.SourceFilePath; // Ensure this is the correct path
+            string sourceFilePath = oTargetBackup.SourceFilePath; // Ensure this is the correct pathHttpClientHandler 
             string targetFolderPath = oTargetBackup.TargetFolderPath; // Target directory on CentOS server
 
             // Define the server details
-            string serverIp = oTargetBackup.ServerIp;
-            string username = oTargetBackup.Username;
-            string password = oTargetBackup.Password;
+            string serverIp = oTargetBackup.TargetServerIp;
+            string username = oTargetBackup.TargetUsername;
+            string password = oTargetBackup.TargetPassword;
 
             try
             {

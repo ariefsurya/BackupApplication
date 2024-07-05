@@ -1,0 +1,101 @@
+﻿@using www.backupserver.com.Repository
+@inject IAuthenticationRepository _authRepo
+@inject NavigationManager Navigation
+
+<div class="pe-4 ps-4">
+    <h3 class="pb-4">Login</h3>
+    <EditForm Model="oUser" OnValidSubmit="Handlelogin" class="fs-5 pb-5">
+        @if (!string.IsNullOrEmpty(LoginErrorMessage))
+        {
+            <div class="text-danger fs-6">@LoginErrorMessage</div>
+        }
+        <div class="pb-2">
+            <label>Username</label>
+            <div>
+                <InputText class="w-100" @bind-Value="oUser.Email" />
+                @if (!string.IsNullOrEmpty(UsernameErrorMessage))
+                {
+                    <div class="text-danger fs-6">@UsernameErrorMessage</div>
+                }
+            </div>
+        </div>
+        <div class="pb-4">
+            <label>Password</label>
+            <div>
+                <InputText class="w-100" @bind-Value="oUser.Password" />
+                @if (!string.IsNullOrEmpty(PasswordErrorMessage))
+                {
+                    <div class="text-danger fs-6">@PasswordErrorMessage</div>
+                }
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100">Continue</button>
+    </EditForm>
+
+
+    <div>
+        OR Create New Account
+    </div>
+    <a href="#" @onclick="OnRegisterClick">Register New Account</a>
+    
+</div>
+
+@code {
+    LoginDTO oUser = new LoginDTO();
+    string LoginErrorMessage = "";
+    string UsernameErrorMessage = "";
+    string PasswordErrorMessage = "";
+    bool isSuccessLogin = false;
+
+    [Parameter]
+    public EventCallback<bool> onModalCallback { get; set; }
+
+    protected async Task Handlelogin()
+    {
+        bool isValid = await HandleValidation();
+
+        if (isValid)
+        {
+            var response = await _authRepo.HandleLogin(oUser);
+            if (response.Code != 200)
+            {
+                LoginErrorMessage = response.Data.ToString();
+                return;
+            }
+            isSuccessLogin = true;
+            CloseModalTodo();
+            Navigation.NavigateTo("/dashboard");
+        }
+    }
+
+    private async Task<bool> HandleValidation()
+    {
+        LoginErrorMessage = "";
+        UsernameErrorMessage = "";
+        PasswordErrorMessage = "";
+        if (string.IsNullOrEmpty(oUser.Email))
+        {
+            UsernameErrorMessage = "Email cannot be empty";
+            return false;
+        }
+        else if (string.IsNullOrEmpty(oUser.Password))
+        {
+            PasswordErrorMessage = "Password cannot be empty";
+            return false;
+        }
+
+        return true;
+    }
+
+
+    async Task CloseModalTodo()
+    {
+        await onModalCallback.InvokeAsync(isSuccessLogin);
+    }
+    async Task OnRegisterClick()
+    {
+        await onModalCallback.InvokeAsync(isSuccessLogin);
+        Navigation.NavigateTo("/register");
+    }
+}

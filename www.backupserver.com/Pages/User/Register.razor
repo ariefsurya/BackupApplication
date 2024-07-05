@@ -1,0 +1,147 @@
+﻿@page "/register"
+
+@using www.backupserver.com.Repository
+@inject IAuthenticationRepository _authRepo
+@* @inject SweetAlertService Swal *@
+@inject NavigationManager Navigation
+
+<div class="d-flex p-5">
+    <div class="w-50 fs-2 pe-5">
+        <div class="pb-4">My Todo Website</div>
+        <div>Welcome!</div>
+        <p>
+            Organize your task with Todo Web App.
+            Simple and Practice
+        </p>
+    </div>
+
+    <div class="w-50">
+        <h3 class="pb-4">Create Account</h3>
+        <EditForm Model="oRegister" OnValidSubmit="HandleRegister" class="fs-5 pb-2">
+            <DataAnnotationsValidator />
+            @* <ValidationSummary /> *@
+            <div class="pb-2">
+                <label>Company Name</label>
+                <div>
+                    <InputText @bind-Value="oRegister.CompanyName" />
+                    @if (!string.IsNullOrEmpty(CompanyNameErrMsg))
+                    {
+                        <div class="text-danger fs-6">@CompanyNameErrMsg</div>
+                    }
+                </div>
+            </div>
+            <div class="pb-2">
+                <label>Email</label>
+                <div>
+                    <InputText @bind-Value="oRegister.Email" />
+                    @if (!string.IsNullOrEmpty(EmailErrMsg))
+                    {
+                        <div class="text-danger fs-6">@EmailErrMsg</div>
+                    }
+                </div>
+            </div>
+            <div class="pb-2">
+                <label>Password</label>
+                <div>
+                    <InputText @bind-Value="oRegister.Password" />
+                    @if (!string.IsNullOrEmpty(PasswordErrMsg))
+                    {
+                        <div class="text-danger fs-6">@PasswordErrMsg</div>
+                    }
+                </div>
+            </div>
+            <div class="pb-2">
+                <label>Re-enter Password</label>
+                <div>
+                    <InputText @bind-Value="oRegister.ConfirmPassword" />
+                    @if (!string.IsNullOrEmpty(ConfirmPasswordErrMsg))
+                    {
+                        <div class="text-danger fs-6">@ConfirmPasswordErrMsg</div>
+                    }
+                </div>
+            </div>
+
+
+            <button type="submit" class="btn btn-success">Register</button>
+        </EditForm>
+
+        <div>
+            By creating an account, you agree to BackupServer
+            <div>
+                <a href="login">Conditions of Use</a> and <a href="login">Privacy Notice</a>.
+            </div>
+        </div>
+        <div>
+            Already have an account? <a href="login">Sign In &gt;</a>
+        </div>
+        
+    </div>
+</div>
+
+@code {
+    RegisterDTO oRegister = new RegisterDTO();
+    string CompanyNameErrMsg = "";
+    string EmailErrMsg = "";
+    string PasswordErrMsg = "";
+    string ConfirmPasswordErrMsg = "";
+
+    protected async Task HandleRegister()
+    {
+        bool isValid = await HandleValidation();
+
+        if (isValid)
+        {
+            var response = await _authRepo.HandleRegister(oRegister);
+            if (response.Code != 200)
+            {
+                EmailErrMsg = response.Data.ToString();
+                return;
+            }
+
+            // SweetAlertResult result = await Swal.FireAsync(new SweetAlertOptions
+            //     {
+            //         Title = "Register Success",
+            //         Text = "You are successfully registered",
+            //         Icon = SweetAlertIcon.Warning,
+            //         ShowCancelButton = false,
+            //         ConfirmButtonText = "Ok",
+            //     }
+            // );
+            // if (!string.IsNullOrEmpty(result.Value) || string.IsNullOrEmpty(result.Value))
+            // {
+            //     Navigation.NavigateTo("/login");
+            // }
+        }
+    }
+
+    private async Task<bool> HandleValidation()
+    {
+        CompanyNameErrMsg = "";
+        EmailErrMsg = "";
+        PasswordErrMsg = "";
+        ConfirmPasswordErrMsg = "";
+
+
+        if (string.IsNullOrEmpty(oRegister.CompanyName))
+        {
+            CompanyNameErrMsg = "Username cannot be empty";
+            return false;
+        }
+        else if (string.IsNullOrEmpty(oRegister.Email))
+        {
+            EmailErrMsg = "Password cannot be empty";
+            return false;
+        }
+        else if (string.IsNullOrEmpty(oRegister.Password))
+        {
+            PasswordErrMsg = "Password cannot be empty";
+            return false;
+        }
+        else if (string.IsNullOrEmpty(oRegister.ConfirmPassword) || oRegister.Password != oRegister.ConfirmPassword)
+        {
+            ConfirmPasswordErrMsg = "Passwords must match";
+            return false;
+        }
+        return true;
+    }
+}

@@ -22,6 +22,19 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__PostgresConnection=Host=postgresbackupdb;Port=5432;Database=backupapp;Username=postgres;Password=postgres;Include Error Detail=true
+      
+  www.backupserver.com:
+    container_name: www.backupserver.com
+    image: www.backupserver.com
+    build:
+      context: .
+      dockerfile: www.backupserver.com/Dockerfile
+    restart: always
+    ports:
+      - "5004:443"
+      - "5005:80"
+    networks:
+      - backup_app
 
   rabbitmqbackup:
     container_name: rabbitmqbackup

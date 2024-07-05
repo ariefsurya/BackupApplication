@@ -1,0 +1,10 @@
+﻿<!-- RedirectToLogin.razor -->
+@inject NavigationManager Navigation
+<p>Loading..</p>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+}

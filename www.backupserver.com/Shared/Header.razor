@@ -1,0 +1,45 @@
+﻿
+<div class="border-2 border-bottom d-flex pb-2 pt-5 header">
+    <div class="header-logo">
+        <a href="#">LOREM IPSUM</a>
+    </div>
+    <div class="col-10 d-flex justify-content-end">
+        <div class="col-5 d-flex justify-content-between pe-lg-5 header-menu ">
+            <div>Company</div>
+            <div>Contact Us</div>
+            <div>
+                <Button Type="ButtonType.Button" Class="border-0" @onclick="SupportContentAsync">Support</Button>
+                <Collapse @ref="collapse_support">
+                    <Card>
+                        <CardBody>
+                            <a href="#">Tutorial</a>
+                        </CardBody>
+                    </Card>
+                </Collapse>
+            </div>
+        </div>
+        <div class="col-1 header-login">
+            <button class="btn btn-success" @onclick="() => ShowModalLogin()">Login</button>
+        </div>
+    </div>
+</div>
+
+<Modal @ref="modalLogin" />
+
+@code {
+    private Modal modalLogin;
+    Collapse collapse_support = default!;
+
+    private async Task SupportContentAsync() => await collapse_support.ToggleAsync();
+
+    private async void ShowModalLogin()
+    {
+        var parameters = new Dictionary<string, object>();
+        var title = "Login";
+        parameters.Add("onModalCallback", EventCallback.Factory.Create<bool>(this, CloseModalLogin));
+
+        await modalLogin.ShowAsync<ModalLogin>(title: title, parameters: parameters);
+    }
+    private void CloseModalLogin(bool e) => modalLogin?.HideAsync();
+
+}
