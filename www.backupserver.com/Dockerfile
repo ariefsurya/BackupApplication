@@ -5,6 +5,9 @@ WORKDIR /app
 EXPOSE 5004
 EXPOSE 5005
 
+# Set the environment variable
+ENV ASPNETCORE_ENVIRONMENT=Development
+
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src

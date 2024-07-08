@@ -1,44 +1,51 @@
-﻿// CustomAuthenticationStateProvider.cs
-using Microsoft.AspNetCore.Components.Authorization;
+﻿using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ProtectedSessionStorage _sessionStorage;
+    private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
 
-    public CustomAuthenticationStateProvider(IHttpContextAccessor httpContextAccessor)
+    public CustomAuthenticationStateProvider(ProtectedSessionStorage sessionStorage)
     {
-        _httpContextAccessor = httpContextAccessor;
+        _sessionStorage = sessionStorage;
     }
 
-    public override Task<AuthenticationState> GetAuthenticationStateAsync()
+    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        // Your logic to determine the authentication state
-        var identity = new ClaimsIdentity(); // Example: create an empty identity
+        var result = await _sessionStorage.GetAsync<string>("authToken");
+        var token = result.Success ? result.Value : null;
 
-        var user = _httpContextAccessor.HttpContext.User;
-        if (user.Identity.IsAuthenticated)
+        if (string.IsNullOrEmpty(token))
         {
-            identity = user.Identity as ClaimsIdentity;
+            return new AuthenticationState(_anonymous);
         }
 
-        var claimsPrincipal = new ClaimsPrincipal(identity);
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+        var identity = new ClaimsIdentity(jwtToken.Claims, "jwt");
 
-        return Task.FromResult(new AuthenticationState(claimsPrincipal));
+        return new AuthenticationState(new ClaimsPrincipal(identity));
     }
 
-    public void MarkUserAsAuthenticated(string token)
+    public async void MarkUserAsAuthenticated(string token)
     {
-        // Example method to mark the user as authenticated based on token
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, "username"), // Example: set claims based on token
-            new Claim(ClaimTypes.Role, "role")
-        };
+        await _sessionStorage.SetAsync("authToken", token);
 
-        var identity = new ClaimsIdentity(claims, "apiauth_type");
-        var user = new ClaimsPrincipal(identity);
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+        var identity = new ClaimsIdentity(jwtToken.Claims, "jwt");
+        var authUser = new ClaimsPrincipal(identity);
 
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
+        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(authUser)));
+    }
+
+    public async void MarkUserAsLoggedOut()
+    {
+        await _sessionStorage.DeleteAsync("authToken");
+        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymous)));
     }
 }

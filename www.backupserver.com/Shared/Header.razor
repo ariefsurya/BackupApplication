@@ -1,4 +1,5 @@
-﻿
+﻿@inject CustomAuthenticationStateProvider _authStateProvider
+
 <div class="border-2 border-bottom d-flex pb-2 pt-5 header">
     <div class="header-logo">
         <a href="#">LOREM IPSUM</a>
@@ -21,14 +22,32 @@
         <div class="col-1 header-login">
             <button class="btn btn-success" @onclick="() => ShowModalLogin()">Login</button>
         </div>
+        @if (isAuthenticated){
+            <div>
+                welcome, {{}}
+            </div>
+        }
     </div>
 </div>
 
 <Modal @ref="modalLogin" />
 
 @code {
+    private bool isAuthenticated;
+    private string username;
     private Modal modalLogin;
     Collapse collapse_support = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await _authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isAuthenticated = user.Identity.IsAuthenticated;
+        if (isAuthenticated)
+        {
+            username = "alip";
+        }
+    }
 
     private async Task SupportContentAsync() => await collapse_support.ToggleAsync();
 

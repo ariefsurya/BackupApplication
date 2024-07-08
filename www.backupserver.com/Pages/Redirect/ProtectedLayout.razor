@@ -20,6 +20,8 @@
         var authState = await _authStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         var isAuthenticated = user.Identity.IsAuthenticated;
+        Console.WriteLine("isAuthenticated");
+        Console.WriteLine(isAuthenticated);
         if (!isAuthenticated)
         {
             Navigation.NavigateTo("/", forceLoad: true);

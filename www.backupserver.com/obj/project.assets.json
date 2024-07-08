@@ -564,6 +564,29 @@
           }
         }
       },
+      "Quick.AspNetCore.Components.Web.Extensions/6.0.2": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNetCore.Components": "6.0.2",
+          "Microsoft.JSInterop": "6.0.2"
+        },
+        "compile": {
+          "lib/net6.0/Microsoft.AspNetCore.Components.Web.Extensions.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/Microsoft.AspNetCore.Components.Web.Extensions.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/Quick.AspNetCore.Components.Web.Extensions.props": {}
+        },
+        "buildMultiTargeting": {
+          "buildMultiTargeting/Quick.AspNetCore.Components.Web.Extensions.props": {}
+        }
+      },
       "Solutaris.InfoWARE.ProtectedBrowserStorage/1.0.1": {
         "type": "package",
         "dependencies": {
@@ -1514,6 +1537,25 @@
         "postgresql.png"
       ]
     },
+    "Quick.AspNetCore.Components.Web.Extensions/6.0.2": {
+      "sha512": "ppLXEca1BL48Sgq0MZyBsQlH0TJXkqY8uqoXl4xv5mpJDBbft6aa4ACOQNztWXwjX0ry13ebDfQLQIgmfekK2w==",
+      "type": "package",
+      "path": "quick.aspnetcore.components.web.extensions/6.0.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "build/Microsoft.AspNetCore.StaticWebAssets.props",
+        "build/Quick.AspNetCore.Components.Web.Extensions.props",
+        "buildMultiTargeting/Quick.AspNetCore.Components.Web.Extensions.props",
+        "buildTransitive/Quick.AspNetCore.Components.Web.Extensions.props",
+        "lib/net6.0/Microsoft.AspNetCore.Components.Web.Extensions.dll",
+        "lib/net6.0/Microsoft.AspNetCore.Components.Web.Extensions.xml",
+        "quick.aspnetcore.components.web.extensions.6.0.2.nupkg.sha512",
+        "quick.aspnetcore.components.web.extensions.nuspec",
+        "staticwebassets/headManager.js"
+      ]
+    },
     "Solutaris.InfoWARE.ProtectedBrowserStorage/1.0.1": {
       "sha512": "28y1YhDNZ61oYnBjY54WEIfvOlKJQHV99HvroHsAyhatlxaZPkpRmYkICVlmeiVAItfCjwkaZI4bFhR3bmV0Qw==",
       "type": "package",
@@ -1621,6 +1663,7 @@
       "Microsoft.VisualStudio.Azure.Containers.Tools.Targets >= 1.20.1",
       "Model >= 1.0.0",
       "Newtonsoft.Json >= 13.0.3",
+      "Quick.AspNetCore.Components.Web.Extensions >= 6.0.2",
       "Solutaris.InfoWARE.ProtectedBrowserStorage >= 1.0.1",
       "System.IdentityModel.Tokens.Jwt >= 7.6.2"
     ]
@@ -1702,6 +1745,10 @@
           "Newtonsoft.Json": {
             "target": "Package",
             "version": "[13.0.3, )"
+          },
+          "Quick.AspNetCore.Components.Web.Extensions": {
+            "target": "Package",
+            "version": "[6.0.2, )"
           },
           "Solutaris.InfoWARE.ProtectedBrowserStorage": {
             "target": "Package",

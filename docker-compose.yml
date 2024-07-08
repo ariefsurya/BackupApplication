@@ -35,6 +35,8 @@ services:
       - "5005:80"
     networks:
       - backup_app
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
 
   rabbitmqbackup:
     container_name: rabbitmqbackup

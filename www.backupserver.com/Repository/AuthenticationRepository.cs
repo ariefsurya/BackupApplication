@@ -29,10 +29,15 @@ namespace www.backupserver.com.Repository
             var response = await httpClient.PostAsJsonAsync(url, user);
 
             ApiResponse apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
+            Console.WriteLine("response.IsSuccessStatusCode: ");
+            Console.WriteLine(response.IsSuccessStatusCode);
             if (response.IsSuccessStatusCode)
             {
                 var loginData = JsonConvert.DeserializeObject<User>(apiResponse.Data.ToString());
+                Console.WriteLine("loginData: ");
+                Console.WriteLine(loginData);
                 _authStateProvider.MarkUserAsAuthenticated(loginData.Token);
+                Console.WriteLine(loginData.Token);
             }
 
             return apiResponse;
@@ -61,11 +66,11 @@ namespace www.backupserver.com.Repository
             var response = await httpClient.PostAsJsonAsync(url, oRegister);
 
             ApiResponse apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
-            if (response.IsSuccessStatusCode)
-            {
-                var loginData = JsonConvert.DeserializeObject<User>(apiResponse.Data.ToString());
-                _authStateProvider.MarkUserAsAuthenticated(loginData.Token);
-            }
+            //if (response.IsSuccessStatusCode)
+            //{
+            //    var loginData = JsonConvert.DeserializeObject<User>(apiResponse.Data.ToString());
+            //    await _authStateProvider.MarkUserAsAuthenticatedAsync(loginData.Token);
+            //}
 
             return apiResponse;
         }

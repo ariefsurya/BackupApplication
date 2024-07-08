@@ -8,6 +8,7 @@ using Solutaris.InfoWARE.ProtectedBrowserStorage.Extensions;
 using System.Net.Security;
 using www.backupserver.com.Data;
 using www.backupserver.com.Repository;
+using www.backupserver.com.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,7 +32,13 @@ builder.Services.AddHttpClient("CustomHttpClient")
 
 //builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSession();
+//builder.Services.AddSession();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(60); // Set the session timeout
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 builder.Services.AddAuthorizationCore();
 builder.Services.AddSweetAlert2();
 builder.Services.AddBlazorBootstrap();
@@ -39,6 +46,9 @@ builder.Services.AddBlazorBootstrap();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+//builder.Services.AddScoped<TokenStorage>();
+builder.Services.AddScoped<ProtectedSessionStorage>();
+builder.Services.AddTransient<ICookieService, CookieService>();
 
 var app = builder.Build();
 
@@ -48,6 +58,10 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+}
+else
+{
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();

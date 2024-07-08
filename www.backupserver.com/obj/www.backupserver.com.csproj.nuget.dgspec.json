@@ -165,6 +165,10 @@
               "target": "Package",
               "version": "[13.0.3, )"
             },
+            "Quick.AspNetCore.Components.Web.Extensions": {
+              "target": "Package",
+              "version": "[6.0.2, )"
+            },
             "Solutaris.InfoWARE.ProtectedBrowserStorage": {
               "target": "Package",
               "version": "[1.0.1, )"
