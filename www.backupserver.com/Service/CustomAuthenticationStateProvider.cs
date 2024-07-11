@@ -14,6 +14,12 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         _sessionStorage = sessionStorage;
     }
 
+    public async Task<string> GetAuthenticationTokenAsync()
+    {
+        var result = await _sessionStorage.GetAsync<string>("authToken");
+        var token = result.Success ? result.Value : null;
+        return token;
+    }
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         var result = await _sessionStorage.GetAsync<string>("authToken");

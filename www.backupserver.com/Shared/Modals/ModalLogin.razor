@@ -1,5 +1,4 @@
-﻿@using www.backupserver.com.Repository
-@inject IAuthenticationRepository _authRepo
+﻿@inject IAuthenticationRepository _authRepo
 @inject NavigationManager Navigation
 
 <div class="pe-4 ps-4">
@@ -10,19 +9,19 @@
             <div class="text-danger fs-6">@LoginErrorMessage</div>
         }
         <div class="pb-2">
-            <label>Username</label>
+            <label>Email</label>
             <div>
-                <InputText class="w-100" @bind-Value="oUser.Email" />
-                @if (!string.IsNullOrEmpty(UsernameErrorMessage))
+                <InputText type="email" class="w-100" @bind-Value="oUser.Email" />
+                @if (!string.IsNullOrEmpty(EmailErrorMessage))
                 {
-                    <div class="text-danger fs-6">@UsernameErrorMessage</div>
+                    <div class="text-danger fs-6">@EmailErrorMessage</div>
                 }
             </div>
         </div>
         <div class="pb-4">
             <label>Password</label>
             <div>
-                <InputText class="w-100" @bind-Value="oUser.Password" />
+                <InputText type="password" class="w-100" @bind-Value="oUser.Password" />
                 @if (!string.IsNullOrEmpty(PasswordErrorMessage))
                 {
                     <div class="text-danger fs-6">@PasswordErrorMessage</div>
@@ -44,7 +43,7 @@
 @code {
     LoginDTO oUser = new LoginDTO();
     string LoginErrorMessage = "";
-    string UsernameErrorMessage = "";
+    string EmailErrorMessage = "";
     string PasswordErrorMessage = "";
     bool isSuccessLogin = false;
 
@@ -72,11 +71,11 @@
     private async Task<bool> HandleValidation()
     {
         LoginErrorMessage = "";
-        UsernameErrorMessage = "";
+        EmailErrorMessage = "";
         PasswordErrorMessage = "";
         if (string.IsNullOrEmpty(oUser.Email))
         {
-            UsernameErrorMessage = "Email cannot be empty";
+            EmailErrorMessage = "Email cannot be empty";
             return false;
         }
         else if (string.IsNullOrEmpty(oUser.Password))

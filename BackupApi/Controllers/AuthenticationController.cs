@@ -45,7 +45,7 @@ namespace BackupApi.Controllers
                     throw new BadHttpRequestException("Email or Password is incorrect.");
                 }
 
-                var token = GenerateJwtToken(oUser.Email);
+                var token = GenerateJwtToken(oUser.Id.ToString(), oUser.Email);
                 oUser.Token = token;
                 oUser.LastLogin = DateTime.UtcNow;
                 User user = await _userServices.UpdateUser(oUser);
@@ -108,13 +108,16 @@ namespace BackupApi.Controllers
         }
 
 
-        private string GenerateJwtToken(string email)
+        private string GenerateJwtToken(string userId, string email)
         {
             var jwtSettings = _configuration.GetSection("Jwt");
             var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Email, email) }),
+                Subject = new ClaimsIdentity(new[] {
+                    new Claim(ClaimTypes.NameIdentifier, userId),
+                    new Claim(ClaimTypes.Email, email)
+                }),
                 Expires = DateTime.UtcNow.AddDays(int.Parse(jwtSettings["ExpiryInDays"])),
                 Issuer = jwtSettings["Issuer"],
                 Audience = jwtSettings["Audience"],

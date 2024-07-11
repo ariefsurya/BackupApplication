@@ -3,6 +3,7 @@
     public class BackupHistory
     {
         public int Id { get; set; }
+        public string BackupJobId { get; set; }
         public string SourceFilePath { get; set; }
         public string TargetFolderPath { get; set; }
         public string TargetServerName { get; set; }

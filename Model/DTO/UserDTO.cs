@@ -9,7 +9,6 @@
         public int CompanyId { get; set; }
         public string Token { get; set; }
 
-
         public UserDTO UserMapToDto(User user)
         {
             return new UserDTO
@@ -19,7 +18,7 @@
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
                 CompanyId = user.CompanyId,
-                Token = user.Token
+                Token = user.Token,
             };
         }
     }

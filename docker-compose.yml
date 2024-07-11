@@ -7,6 +7,7 @@ services:
     build:
       context: .
       dockerfile: BackupApi/Dockerfile
+    restart: always
     ports:
       - "5001:443"
       - "5000:80"
@@ -41,6 +42,7 @@ services:
   rabbitmqbackup:
     container_name: rabbitmqbackup
     image: 'rabbitmq:3.13.3-management-alpine'
+    restart: always
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -55,6 +57,7 @@ services:
   postgresbackupdb:
     container_name: postgresbackupdb
     image: postgres:latest
+    restart: always
     environment:
       - POSTGRES_DB=backupapp
       - POSTGRES_USER=postgres

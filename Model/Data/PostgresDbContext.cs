@@ -13,5 +13,6 @@ namespace Model
         public DbSet<Company> Company { get; set; }
         public DbSet<TargetBackup> TargetBackup { get; set; }
         public DbSet<BackupHistory> BackupHistory { get; set; }
+        public DbSet<BackupJob> BackupJob { get; set; }
     }
 }
