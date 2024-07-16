@@ -169,6 +169,10 @@
               "target": "Package",
               "version": "[6.0.2, )"
             },
+            "Radzen.Blazor": {
+              "target": "Package",
+              "version": "[4.34.0, )"
+            },
             "Solutaris.InfoWARE.ProtectedBrowserStorage": {
               "target": "Package",
               "version": "[1.0.1, )"

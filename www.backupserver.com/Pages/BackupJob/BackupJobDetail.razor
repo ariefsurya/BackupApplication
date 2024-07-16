@@ -1,0 +1,126 @@
+﻿@page "/backupjobdetail"
+@layout ProtectedLayout
+@inject IBackupJobRepository _backupJobRepo
+@inject NavigationManager Navigation
+
+<h3>BackupJobDetail</h3>
+<div class="d-flex fs-5 justify-content-between w-25">
+    <div>
+        <b>Source Server Ip</b>
+        <div>
+            127.0.0.1
+        </div>
+    </div>
+    <span<i class="bi bi-arrow-right"></i></span>
+    <div>
+        <b>Target Server Ip</b>
+        <div>
+            127.0.0.1
+        </div>
+    </div>
+</div>
+<div class="mb-3 border-bottom pt-2 ">
+    <b>File Name</b>
+    <div>test.txt</div>
+</div>
+
+
+<div>
+    <h5>Backup History</h5>
+    <table class="border border-black rounded w-100">
+        <tr class="bg-opacity-25 bg-secondary m-0 row">
+            <th class="col-1 p-2">Id</th>
+            <th class="col-3 p-2">Backup Job Name</th>
+            <th class="col-3 p-2">Status Id</th>
+            <th class="col-3 p-2">Last Backup Date</th>
+            <th class="col-2 p-2">Last Backup Status</th>
+        </tr>
+        @if (lBackupHistory.Count == 0)
+        {
+            <tr>
+                <td class="p-2">no history</td>
+            </tr>
+        }
+        @foreach (var backupJob in lBackupHistory)
+        {
+            <tr class="m-0 row">
+                <td class="col-1 p-2">backupJob.Id</td>
+                <td class="col-3 p-2">backupJob.BackupJobName</td>
+                <td class="col-3 p-2">backupJob.StatusId</td>
+                <td class="col-3 p-2">backupJob.LastBackupDate</td>
+                <td class="col-2 p-2">backupJob.LastBackupStatus</td>
+            </tr>
+        }
+    </table>
+    <Pagination ActivePageNumber="@filter.iPage"
+                TotalPages="(int)Math.Ceiling(Convert.ToDecimal(lBackupHistory.Count > 0 ? lBackupHistory[0].total_count : 0)/10)"
+                PageChanged="OnChangePaging"
+                class="d-flex justify-content-center" />
+</div>
+
+@code {
+    int backupJobId = 0;
+    BackupJobDTO oBackupJobDetail = new BackupJobDTO();
+    List<BackupHistoryDTO> lBackupHistory = new List<BackupHistoryDTO>();
+    BackupFilter filter = new BackupFilter();
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var id = GetQueryParm("id");
+            backupJobId = Int32.Parse(id);
+            await FetchBackupJobDataDetail();
+        }
+    }
+    string GetQueryParm(string parmName)
+    {
+        var uriBuilder = new UriBuilder(Navigation.Uri);
+        var q = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
+        return q[parmName] ?? "";
+    }
+
+    private async Task FetchBackupJobDataDetail()
+    {
+        var response = await _backupJobRepo.GetCompanyBackupJobDetail(backupJobId);
+
+        if (response.Code != 200)
+        {
+            // SubmitErrorMessage = response.Data.ToString();
+            // return;
+        }
+
+        oBackupJobDetail = JsonConvert.DeserializeObject<BackupJobDTO>(response.Data.ToString());
+    }
+    private async Task FetchBackupJobDataHistory()
+    {
+        var response = await _backupJobRepo.GetCompanyBackupJobHistory(backupJobId);
+
+        if (response.Code != 200)
+        {
+            // SubmitErrorMessage = response.Data.ToString();
+            // return;
+        }
+
+        oBackupJobDetail = JsonConvert.DeserializeObject<BackupJobDTO>(response.Data.ToString());
+    }
+    private async Task OnChangePaging(int newPageNumber)
+    {
+        await Task.Run(() => { filter.iPage = newPageNumber; });
+        FetchBackupJobDataHistory();
+    }
+
+    protected class BackupFilter
+    {
+        public BackupFilter()
+        {
+            iPage = 1;
+            iTake = 10;
+            search = "";
+        }
+        public int iPage { get; set; }
+        public int iTake { get; set; }
+        public string search { get; set; }
+    }
+}

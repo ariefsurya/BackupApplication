@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.DataProtection;
 using Solutaris.InfoWARE.ProtectedBrowserStorage.Extensions;
 using System.Net.Security;
 using www.backupserver.com.Data;
@@ -51,6 +52,10 @@ builder.Services.AddScoped<IBackupJobRepository, BackupJobRepository>();
 builder.Services.AddScoped<ProtectedSessionStorage>();
 builder.Services.AddScoped<ICookieService, CookieService>();
 
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(@"/keys/"))
+    .SetApplicationName("YourApp");
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -71,9 +76,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession();
 
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");

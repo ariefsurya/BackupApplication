@@ -9,6 +9,7 @@ namespace www.backupserver.com.Repository
     {
         public Task<ApiResponse> GetCompanyBackupJob(string search, int iPage, int iTake);
         public Task<ApiResponse> GetCompanyBackupJobDetail(int backupJobId);
+        public Task<ApiResponse> GetCompanyBackupJobHistory(int backupJobId);
         public Task<ApiResponse> SaveCompanyBackupJobDetail(BackupJobDTO oBackupJobDTO);
     }
 
@@ -31,7 +32,7 @@ namespace www.backupserver.com.Repository
                 throw new InvalidOperationException("User is not authenticated.");
             }
 
-            string url = StaticEndpoint.BaseUrl + $"/BackupJob/GetCompanyBackupJobDetail?search={Uri.EscapeDataString(search)}&iPage={iPage}&iTake={iTake}";
+            string url = StaticEndpoint.BaseUrl + $"/BackupJob/GetCompanyBackupJob?search={Uri.EscapeDataString(search)}&iPage={iPage}&iTake={iTake}";
             var httpClient = _httpClientFactory.CreateClient("CustomHttpClient");
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -49,7 +50,25 @@ namespace www.backupserver.com.Repository
                 throw new InvalidOperationException("User is not authenticated.");
             }
 
-            string url = StaticEndpoint.BaseUrl + $"/BackupJob/GetCompanyBackupJobDetail?userId={backupJobId}";
+            string url = StaticEndpoint.BaseUrl + $"/BackupJob/GetCompanyBackupJobDetail?id={backupJobId}";
+            var httpClient = _httpClientFactory.CreateClient("CustomHttpClient");
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await httpClient.GetAsync(url);
+
+            ApiResponse apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+            return apiResponse;
+        }
+        public async Task<ApiResponse> GetCompanyBackupJobHistory(int backupJobId)
+        {
+            var token = await _authStateProvider.GetAuthenticationTokenAsync();
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new InvalidOperationException("User is not authenticated.");
+            }
+
+            string url = StaticEndpoint.BaseUrl + $"/BackupJob/GetCompanyBackupJobHistory?id={backupJobId}";
             var httpClient = _httpClientFactory.CreateClient("CustomHttpClient");
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 

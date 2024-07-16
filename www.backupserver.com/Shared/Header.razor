@@ -1,4 +1,5 @@
 ﻿@inject CustomAuthenticationStateProvider _authStateProvider
+@inject IAuthenticationRepository _authRepository
 
 <div class="border-2 border-bottom d-flex pb-2 pt-5 header">
     <div class="header-logo">
@@ -19,12 +20,14 @@
                 </Collapse>
             </div>
         </div>
+        @if (!isAuthenticated){
         <div class="col-1 header-login">
             <button class="btn btn-success" @onclick="() => ShowModalLogin()">Login</button>
-        </div>
+            </div>
+        }
         @if (isAuthenticated){
             <div>
-                welcome, {{}}
+                welcome, @username
             </div>
         }
     </div>
@@ -46,6 +49,7 @@
         if (isAuthenticated)
         {
             username = "alip";
+            await ApiGetUserDetails();
         }
     }
 
@@ -61,4 +65,17 @@
     }
     private void CloseModalLogin(bool e) => modalLogin?.HideAsync();
 
+
+    private async Task ApiGetUserDetails()
+    {
+        var response = await _authRepository.HandleGetUserDetails();
+
+        if (response.Code != 200)
+        {
+            // SubmitErrorMessage = response.Data.ToString();
+            return;
+        }
+
+        User user = JsonConvert.DeserializeObject<User>(response.Data.ToString());
+    }
 }

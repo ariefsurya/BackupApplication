@@ -4,34 +4,77 @@
 @inject NavigationManager Navigation
 
 <h3>Dashboard</h3>
-<Grid TItem="BackupJobDTO"
-      Class="table table-hover table-bordered table-striped"
-      DataProvider="GetBackupJobDataProvider"
-      AllowFiltering="true"
-      AllowPaging="true"
-      AllowSorting="false"
-      Responsive="true">
 
-    <GridColumn TItem="BackupJobDTO" HeaderText="Id" PropertyName="CustomerId" SortString="CustomerId" FilterTextboxWidth="50" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
-        @context.Id
-    </GridColumn>
-    <GridColumn TItem="BackupJobDTO" HeaderText="Customer Name" PropertyName="CustomerName" SortString="CustomerName" FilterTextboxWidth="80">
-        @context.BackupJobName
-    </GridColumn>
-    <GridColumn TItem="BackupJobDTO" HeaderText="Phone" PropertyName="Phone" SortString="Phone" FilterTextboxWidth="100">
-        @context.StatusId
-    </GridColumn>
-    <GridColumn TItem="BackupJobDTO" HeaderText="Email" PropertyName="Email" SortString="Email" FilterTextboxWidth="120">
-        @context.LastBackupDate
-    </GridColumn>
-    <GridColumn TItem="BackupJobDTO" HeaderText="Address" PropertyName="Address" SortString="Address" FilterTextboxWidth="150">
-        @context.LastBackupStatus
-    </GridColumn>
-
-</Grid>
+<div class="d-flex justify-content-between pb-1">
+    <div>
+        <input class="p-1" type="text" @bind-value="@filter.search" @onkeypress="OnSearchBackupJob" placeholder="search backup job / ip" style="min-width: 500px;"/>
+        <input class="p-1" type="submit" value="Filter" @onclick="OnSearchBackupJob" />
+    </div>
+    <a href="javascript:;" class="btn btn-success mb-3 me-5 ms-auto" @onclick="() => NavigateToEdit(0)">+ Add Backup Job</a>
+    <Pagination ActivePageNumber="@filter.iPage"
+                TotalPages="(int)Math.Ceiling(Convert.ToDecimal(lBackupJobDTO.Count > 0 ? lBackupJobDTO[0].total_count : 0)/10)"
+                PageChanged="OnChangePaging"
+                class="d-flex justify-content-center" />
+</div>
+<table class="border border-black rounded w-100">
+    <tr class="bg-opacity-25 bg-secondary m-0 row">
+        <th class="col-1 p-2">Id</th>
+        <th class="col-3 p-2">Backup Job Name</th>
+        <th class="col-3 p-2">Status Id</th>
+        <th class="col-3 p-2">Last Backup Date</th>
+        <th class="col-2 p-2">Last Backup Status</th>
+    </tr>
+    @if (lBackupJobDTO.Count == 0)
+    {
+        <tr>
+            <td class="p-2">no data</td>
+        </tr>
+    }
+    @foreach (var backupJob in lBackupJobDTO)
+    {
+        <tr class="m-0 row" @onclick="() => NavigateToDetail(backupJob.Id)">
+            <td class="col-1 p-2">@backupJob.Id</td>
+            <td class="col-3 p-2">@backupJob.BackupJobName</td>
+            <td class="col-3 p-2">@backupJob.StatusId</td>
+            <td class="col-3 p-2">@backupJob.LastBackupDate</td>
+            <td class="col-2 p-2">@backupJob.LastBackupStatus</td>
+        </tr>
+    }
+</table>
 
 @code {
     List<BackupJobDTO> lBackupJobDTO = new List<BackupJobDTO>();
+    BackupFilter filter = new BackupFilter();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchBackupJobDataProvider();
+    }
+
+    private async Task FetchBackupJobDataProvider()
+    {
+        var response = await _backupJobRepo.GetCompanyBackupJob(filter.search, filter.iPage, filter.iTake);
+
+        if (response.Code != 200)
+        {
+            // SubmitErrorMessage = response.Data.ToString();
+            // return;
+        }
+
+        lBackupJobDTO = JsonConvert.DeserializeObject<List<BackupJobDTO>>(response.Data.ToString());
+    }
+    private async Task OnChangePaging(int newPageNumber)
+    {
+        await Task.Run(() => { filter.iPage = newPageNumber; });
+        FetchBackupJobDataProvider();
+    }
+    private async void OnSearchBackupJob()
+    {
+        await FetchBackupJobDataProvider();
+
+        // StateHasChanged();
+    }
+
     private async Task<GridDataProviderResult<BackupJobDTO>> GetBackupJobDataProvider(GridDataProviderRequest<BackupJobDTO> request)
     {
         string sortString = "";
@@ -44,7 +87,6 @@
             sortDirection = request.Sorting.FirstOrDefault()!.SortDirection;
         }
         var response = await _backupJobRepo.GetCompanyBackupJob(request.Filters.ToString(), request.PageNumber, request.PageSize);
-
         if (response.Code != 200)
         {
             // SubmitErrorMessage = response.Data.ToString();
@@ -55,4 +97,30 @@
         return await Task.FromResult(new GridDataProviderResult<BackupJobDTO> { Data = lBackupJobDTO, TotalCount = lBackupJobDTO.Count > 0 ? lBackupJobDTO[0].total_count : 0 });
     }
 
+
+    protected void NavigateToDetail(int id)
+    {
+        Navigation.NavigateTo("/backupjobdetail?id" + id.ToString());
+    }
+    protected void NavigateToEdit(int id)
+    {
+        var url = "/backupjobedit";
+        if (id != null && id != 0)
+        {
+            url = url + "?id=" + id.ToString();
+        }
+        Navigation.NavigateTo(url);
+    }
+
+    protected class BackupFilter
+    {
+        public BackupFilter() {
+            iPage = 1;
+            iTake = 10;
+            search = "";
+        }
+        public int iPage { get; set; }
+        public int iTake { get; set; }
+        public string search { get; set; }
+    }
 }

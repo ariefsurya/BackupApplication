@@ -5,6 +5,7 @@
         public int Id { get; set; }
         public string BackupJobName { get; set; }
         public int CompanyId { get; set; }
+        public bool IsUseScheduler { get; set; }
         public int StatusId { get; set; }
         public DateTime LastBackupDate { get; set; }
         public int LastBackupStatus { get; set; }

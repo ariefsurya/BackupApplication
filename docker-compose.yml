@@ -23,6 +23,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__PostgresConnection=Host=postgresbackupdb;Port=5432;Database=backupapp;Username=postgres;Password=postgres;Include Error Detail=true
+      - Jwt__Key=Appl1c@t1on8@ckUpAp1JWTVerySecretKey
+      - Jwt__Issuer=https://www.backupserver.com
+      - Jwt__Audience=https://backupapi
+      - "./keys:/keys"
       
   www.backupserver.com:
     container_name: www.backupserver.com
@@ -38,6 +42,7 @@ services:
       - backup_app
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - "./keys:/keys"
 
   rabbitmqbackup:
     container_name: rabbitmqbackup

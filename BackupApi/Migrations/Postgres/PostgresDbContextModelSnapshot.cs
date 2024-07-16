@@ -30,9 +30,18 @@ namespace BackupApi.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("BackupJobId")
+                    b.Property<int>("BackupJobId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BackupJobName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("BackupSchedulerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BackupStatusId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("CompanyId")
                         .HasColumnType("integer");
@@ -55,10 +64,6 @@ namespace BackupApi.Migrations.Postgres
                         .HasColumnType("text");
 
                     b.Property<string>("TargetServerIp")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TargetServerName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -91,6 +96,9 @@ namespace BackupApi.Migrations.Postgres
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsUseScheduler")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("LastBackupDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -109,6 +117,53 @@ namespace BackupApi.Migrations.Postgres
                     b.HasKey("Id");
 
                     b.ToTable("BackupJob");
+                });
+
+            modelBuilder.Entity("Model.BackupScheduler", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BackupJobId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BackupSchedulerType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<TimeOnly>("SchedulerClockTimeSet")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("SchedulerDateDaySet")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SchedulerStartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UpdatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BackupScheduler");
                 });
 
             modelBuilder.Entity("Model.Company", b =>

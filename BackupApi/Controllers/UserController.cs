@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Model;
 using Model.Services;
 using System.Security.Claims;
+using TodosApi.Data;
+using TodosApi.Middleware;
 using TodosApi.Services.Redis;
 
 namespace BackupApi.Controllers
@@ -13,6 +15,7 @@ namespace BackupApi.Controllers
     {
         private readonly IUserServices _userServices;
         private readonly IAuthUserService _authUserService;
+        private ResponseHandler responseHandler = new ResponseHandler();
 
         public UserController(IUserServices userServices, IAuthUserService authUserService)
         {
@@ -31,7 +34,7 @@ namespace BackupApi.Controllers
             }
 
             UserDTO oUserDTO = new UserDTO();
-            return Ok(oUserDTO.UserMapToDto(user));
+            return responseHandler.ApiReponseHandler(oUserDTO.UserMapToDto(user));
         }
     }
 }

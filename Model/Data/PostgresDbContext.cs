@@ -14,5 +14,6 @@ namespace Model
         public DbSet<TargetBackup> TargetBackup { get; set; }
         public DbSet<BackupHistory> BackupHistory { get; set; }
         public DbSet<BackupJob> BackupJob { get; set; }
+        public DbSet<BackupScheduler> BackupScheduler { get; set; }
     }
 }

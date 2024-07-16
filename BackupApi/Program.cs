@@ -9,17 +9,19 @@ using Microsoft.IdentityModel.Tokens;
 using TodosApi.Middleware;
 using TodosApi.Services.Redis;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<IRabitMQProducer, RabitMQProducer>();
+builder.Services.AddScoped<IAuthUserService, AuthUserService>();
 builder.Services.AddScoped<IUserServices, UserServices>();
 builder.Services.AddScoped<ICompanyServices, CompanyServices>();
 builder.Services.AddScoped<IBackupJobServices, BackupJobServices>();
 builder.Services.AddScoped<IBackupHistoryServices, BackupHistoryServices>();
 builder.Services.AddScoped<ITargetBackupServices, TargetBackupServices>();
-builder.Services.AddScoped<IAuthUserService, AuthUserService>();
+builder.Services.AddScoped<IBackupSchedulerServices, BackupSchedulerServices>();
 
 
 builder.Services.AddControllers();
@@ -52,6 +54,7 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(key)
+        //IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
     };
     options.Events = new JwtBearerEvents
     {
@@ -72,6 +75,9 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(@"/keys/"))
+    .SetApplicationName("BackupApi");
 builder.Services.AddLogging(logging =>
 {
     logging.AddConsole();

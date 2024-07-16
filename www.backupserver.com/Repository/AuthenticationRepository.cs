@@ -8,6 +8,7 @@ namespace www.backupserver.com.Repository
     {
         public Task<ApiResponse> HandleLogin(LoginDTO user);
         public Task<ApiResponse> HandleRegister(RegisterDTO oRegister);
+        public Task<ApiResponse> HandleGetUserDetails();
     }
 
     public class AuthenticationRepository : IAuthenticationRepository

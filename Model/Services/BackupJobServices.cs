@@ -39,8 +39,8 @@ namespace Model.Services
                     _pageindex := @pageIndex, 
                     _numrows := @numRows, 
                     _sortby := @sortBy)";
+            var querytest = "SELECT * FROM public.get_all_backupjobs('', 0, 10, 'backupjob.\"Id\"')";
 
-            Console.WriteLine($"Executing query: {query}");
 
             using (var connection = new NpgsqlConnection(_connectionString))
             {
@@ -49,7 +49,7 @@ namespace Model.Services
                 using (var command = new NpgsqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@searchCriteria", searchCriteria);
-                    command.Parameters.AddWithValue("@pageIndex", pageIndex);
+                    command.Parameters.AddWithValue("@pageIndex", pageIndex-1);
                     command.Parameters.AddWithValue("@numRows", numRows);
                     command.Parameters.AddWithValue("@sortBy", sortBy);
 
@@ -78,47 +78,6 @@ namespace Model.Services
                 }
             }
         }
-
-
-        //public async Task<List<BackupJobDTO>> GetAllBackupJobsAsync(string searchCriteria, int pageIndex, int numRows, string sortBy)
-        //{
-        //    using (var connection = new NpgsqlConnection(_connectionString))
-        //    {
-        //        await connection.OpenAsync();
-
-        //        var command = new NpgsqlCommand("public.get_all_backupjobs", connection)
-        //        {
-        //            CommandType = CommandType.StoredProcedure
-        //        };
-
-        //        command.Parameters.AddWithValue("_searchcriteria", searchCriteria);
-        //        command.Parameters.AddWithValue("_pageindex", pageIndex-1);
-        //        command.Parameters.AddWithValue("_numrows", numRows);
-        //        command.Parameters.AddWithValue("_sortby", sortBy);
-
-        //        var backupJobs = new List<BackupJobDTO>();
-
-        //        using (var reader = await command.ExecuteReaderAsync())
-        //        {
-        //            while (await reader.ReadAsync())
-        //            {
-        //                backupJobs.Add(new BackupJobDTO
-        //                {
-        //                    Id = reader.GetInt32(0),
-        //                    BackupJobName = reader.GetString(1),
-        //                    StatusId = reader.GetInt32(2),
-        //                    LastBackupDate = reader.GetDateTime(3),
-        //                    LastBackupStatus = reader.GetInt32(4),
-        //                    SourceServerIp = reader.GetString(5),
-        //                    SourceFilePath = reader.GetString(6),
-        //                    total_count = reader.GetInt32(7),
-        //                });
-        //            }
-        //        }
-
-        //        return backupJobs;
-        //    }
-        //}
 
         public async Task<BackupJob> AddBackupJob(BackupJob oBackupJob)
         {
