@@ -9,6 +9,8 @@
     {
         public string FormatDateTime(DateTime date)
         {
+            if (date == DateTime.MinValue)
+                return "-";
             return date.ToString("d/M/yyyy");
         }
     }

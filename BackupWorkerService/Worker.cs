@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Channels;
 using Renci.SshNet;
+using Model.Enum;
 
 namespace BackupWorkerService
 {
@@ -123,19 +124,50 @@ namespace BackupWorkerService
             System.Threading.Thread.Sleep(1000); // Simulate time taken to backup
 
             _logger.LogInformation($"api history Backup of database '{oTargetBackup.SourceFilePath}' completed");
-            // Create an HttpClientHandler with custom certificate validation
             HttpClientHandler handler = new HttpClientHandler
             {
                 ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
             };
-
             using HttpClient httpClient = new HttpClient(handler);
-            //var httpClient = _httpClientFactory.CreateClient(handler);
-            var response = await httpClient.PostAsJsonAsync("https://localhost:5001/backup/sendBackupHistory", new BackupHistory{ 
-                CompanyId = Int32.Parse(_companyId.Replace("company-", "")),
-                SourceFilePath = oTargetBackup.SourceFilePath,
-                TargetFolderPath = oTargetBackup.TargetFolderPath
-            });
+            HttpResponseMessage response = null;
+            if (isSuccessServerBackup)
+            {
+                response = await httpClient.PostAsJsonAsync("https://localhost:5001/backup/sendBackupHistory", new BackupHistory
+                {
+
+                    BackupJobId = oTargetBackup.BackupJobId,
+                    BackupJobName = oTargetBackup.TargetFileName.ToString(),
+                    SourceFilePath = oTargetBackup.SourceFilePath,
+                    TargetFolderPath = oTargetBackup.TargetFolderPath,
+                    TargetServerIp = oTargetBackup.TargetServerIp,
+                    TargetBackupId = oTargetBackup.Id,
+                    BackupSchedulerId = 0,
+                    BackupStatusId = (int)EnumBackupStatus.Success,
+                    CompanyId = Int32.Parse(_companyId.Replace("company-", "")),
+                    CreatedBy = -2,
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedDate = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                response = await httpClient.PostAsJsonAsync("https://localhost:5001/backup/sendBackupHistory", new BackupHistory
+                {
+
+                    BackupJobId = oTargetBackup.BackupJobId,
+                    BackupJobName = oTargetBackup.TargetFileName.ToString(),
+                    SourceFilePath = oTargetBackup.SourceFilePath,
+                    TargetFolderPath = oTargetBackup.TargetFolderPath,
+                    TargetServerIp = oTargetBackup.TargetServerIp,
+                    TargetBackupId = oTargetBackup.Id,
+                    BackupSchedulerId = 0,
+                    BackupStatusId = (int)EnumBackupStatus.Failed,
+                    CompanyId = Int32.Parse(_companyId.Replace("company-", "")),
+                    CreatedBy = -2,
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedDate = DateTime.UtcNow
+                });
+            }
 
             if (response.IsSuccessStatusCode)
             {

@@ -142,8 +142,8 @@ namespace BackupApi.Migrations.Postgres
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<TimeOnly>("SchedulerClockTimeSet")
-                        .HasColumnType("time without time zone");
+                    b.Property<TimeSpan>("SchedulerClockTimeSet")
+                        .HasColumnType("interval");
 
                     b.Property<string>("SchedulerDateDaySet")
                         .IsRequired()
@@ -215,7 +215,6 @@ namespace BackupApi.Migrations.Postgres
                         .HasColumnType("text");
 
                     b.Property<string>("TargetFileName")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("TargetFolderPath")

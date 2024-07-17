@@ -11,6 +11,9 @@ using TodosApi.Data;
 using Model.Enum;
 using TodosApi.Middleware;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.IdentityModel.Tokens;
+using System.Text.Json;
 
 namespace BackupApi.Controllers
 {
@@ -78,8 +81,9 @@ namespace BackupApi.Controllers
                 var oBackupJob = await _backupJobServices.GetBackupJobById(backupJobId, user.CompanyId);
                 if (oBackupJob != null)
                 {
-                    oBackupJobDTO.BackupJobMapToDto(oBackupJob);
+                    oBackupJobDTO = oBackupJobDTO.BackupJobMapToDto(oBackupJob);
                     oBackupJobDTO.oTargetBackup = await _targetBackupServices.GetTargetBackupByBackupJobId(backupJobId, user.CompanyId);
+                    oBackupJobDTO.oBackupScheduler = await _backupSchedulerServices.GetBackupSchedulerByBackupJobId(backupJobId, user.CompanyId);
                 }
 
                 return responseHandler.ApiReponseHandler(oBackupJobDTO);
@@ -119,15 +123,49 @@ namespace BackupApi.Controllers
         public async Task<IActionResult> SaveCompanyBackupJob(BackupJobDTO oBackupJobParam)
         {
             try {
+                Console.WriteLine("SaveCompanyBackupJob");
+                Console.WriteLine(oBackupJobParam);
+                string jsonString = JsonSerializer.Serialize(oBackupJobParam, new JsonSerializerOptions { WriteIndented = true });
+                Console.WriteLine("jsonString");
+                Console.WriteLine(jsonString);
                 var user = await _authUserService.GetUserDetail(User);
                 if (user == null)
                 {
                     throw new UnauthorizedAccessException();
                 }
 
+                #region validation
+                if (oBackupJobParam == null || oBackupJobParam.oTargetBackup == null)
+                    throw new BadHttpRequestException("BackupJob cannot be empty.");
+                else if (string.IsNullOrEmpty(oBackupJobParam.BackupJobName))
+                    throw new BadHttpRequestException("Backup Job Name cannot be empty.");
+                else if (string.IsNullOrEmpty(oBackupJobParam.oTargetBackup.SourceServerIp))
+                    throw new BadHttpRequestException("Source Server Ip cannot be empty.");
+                else if (string.IsNullOrEmpty(oBackupJobParam.oTargetBackup.SourceFilePath))
+                    throw new BadHttpRequestException("Source File cannot be empty.");
+                else if (string.IsNullOrEmpty(oBackupJobParam.oTargetBackup.TargetServerIp))
+                    throw new BadHttpRequestException("Target Server Ip cannot be empty.");
+                else if (string.IsNullOrEmpty(oBackupJobParam.oTargetBackup.TargetFolderPath))
+                    throw new BadHttpRequestException("Target Folder Path cannot be empty.");
+                else if (string.IsNullOrEmpty(oBackupJobParam.oTargetBackup.TargetUsername))
+                    throw new BadHttpRequestException("Target Server Username cannot be empty.");
+                else if (string.IsNullOrEmpty(oBackupJobParam.oTargetBackup.TargetPassword))
+                    throw new BadHttpRequestException("Target Server Password cannot be empty.");
+                else if (oBackupJobParam.IsUseScheduler)
+                {
+                    if (oBackupJobParam.oBackupScheduler.BackupSchedulerType == null || oBackupJobParam.oBackupScheduler.BackupSchedulerType == 0)
+                        throw new BadHttpRequestException("Backup Scheduler Type cannot be empty.");
+                    else if (string.IsNullOrEmpty(oBackupJobParam.oBackupScheduler.SchedulerDateDaySet))
+                        throw new BadHttpRequestException("Scheduler Run Date Day cannot be empty.");
+                    else if (oBackupJobParam.oBackupScheduler.SchedulerStartDate == DateTime.MinValue)
+                        throw new BadHttpRequestException("Scheduler Start Date cannot be empty.");
+                }
+                #endregion
+
                 BackupJob oBackupJob = null;
                 if (oBackupJobParam.Id != null && oBackupJobParam.Id != 0)
                 {
+                    #region oBackupJob Edit
                     oBackupJob = await _backupJobServices.GetBackupJobById(oBackupJobParam.Id, user.CompanyId);
                     if (oBackupJob == null)
                     {
@@ -146,7 +184,7 @@ namespace BackupApi.Controllers
                     oTargetBackup.SourceFilePath = oBackupJobParam.oTargetBackup.SourceFilePath;
                     oTargetBackup.TargetServerIp = oBackupJobParam.oTargetBackup.TargetServerIp;
                     oTargetBackup.TargetFolderPath = oBackupJobParam.oTargetBackup.TargetFolderPath;
-                    oTargetBackup.TargetFileName = oBackupJobParam.oTargetBackup.TargetFileName;
+                    oTargetBackup.TargetFileName = Path.GetFileName(oBackupJobParam.oTargetBackup.SourceFilePath);
                     oTargetBackup.TargetUsername = oBackupJobParam.oTargetBackup.TargetUsername;
                     oTargetBackup.TargetPassword = oBackupJobParam.oTargetBackup.TargetPassword;
                     oTargetBackup.UpdatedDate = DateTime.UtcNow;
@@ -162,7 +200,7 @@ namespace BackupApi.Controllers
                     oBackupScheduler.BackupSchedulerType = oBackupJobParam.oBackupScheduler.BackupSchedulerType;
                     oBackupScheduler.SchedulerDateDaySet = oBackupJobParam.oBackupScheduler.SchedulerDateDaySet;
                     oBackupScheduler.SchedulerClockTimeSet = oBackupJobParam.oBackupScheduler.SchedulerClockTimeSet;
-                    oBackupScheduler.SchedulerStartDate = oBackupJobParam.oBackupScheduler.SchedulerStartDate;
+                    oBackupScheduler.SchedulerStartDate = oBackupJobParam.oBackupScheduler.SchedulerStartDate.ToUniversalTime();
                     oBackupScheduler.StatusId = (int)EnumStatus.Active;
                     oBackupScheduler.UpdatedBy = user.Id;
                     oBackupScheduler.UpdatedDate = DateTime.UtcNow;
@@ -177,9 +215,11 @@ namespace BackupApi.Controllers
                             oBackupScheduler = await _backupSchedulerServices.UpdateBackupScheduler(oBackupScheduler);
                         scope.Complete();
                     }
+                    #endregion
                 }
                 else
                 {
+                    #region oBackupJob Add
                     oBackupJob = new BackupJob
                     {
                         BackupJobName = oBackupJobParam.BackupJobName,
@@ -196,7 +236,7 @@ namespace BackupApi.Controllers
                         SourceFilePath = oBackupJobParam.oTargetBackup.SourceFilePath,
                         TargetServerIp = oBackupJobParam.oTargetBackup.TargetServerIp,
                         TargetFolderPath = oBackupJobParam.oTargetBackup.TargetFolderPath,
-                        TargetFileName = oBackupJobParam.oTargetBackup.TargetFileName,
+                        TargetFileName = Path.GetFileName(oBackupJobParam.oTargetBackup.SourceFilePath),
                         TargetUsername = oBackupJobParam.oTargetBackup.TargetUsername,
                         TargetPassword = oBackupJobParam.oTargetBackup.TargetPassword,
                         CreatedDate = DateTime.UtcNow,
@@ -210,7 +250,7 @@ namespace BackupApi.Controllers
                         BackupSchedulerType = oBackupJobParam.oBackupScheduler.BackupSchedulerType,
                         SchedulerDateDaySet = oBackupJobParam.oBackupScheduler.SchedulerDateDaySet,
                         SchedulerClockTimeSet = oBackupJobParam.oBackupScheduler.SchedulerClockTimeSet,
-                        SchedulerStartDate = oBackupJobParam.oBackupScheduler.SchedulerStartDate,
+                        SchedulerStartDate = oBackupJobParam.oBackupScheduler.SchedulerStartDate.ToUniversalTime(),
                         StatusId = (int)EnumStatus.Active,
                         UpdatedBy = user.Id,
                         UpdatedDate = DateTime.UtcNow,
@@ -225,6 +265,7 @@ namespace BackupApi.Controllers
                         oBackupScheduler = await _backupSchedulerServices.AddBackupScheduler(oBackupScheduler);
                         scope.Complete();
                     }
+                    #endregion
                 }
 
                 return responseHandler.ApiReponseHandler(oBackupJob);

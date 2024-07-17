@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.RazorPages;
 using Model;
-using Newtonsoft.Json;
+using System.Text.Json;
 using www.backupserver.com.Pages.User;
 
 namespace www.backupserver.com.Repository
@@ -50,7 +50,7 @@ namespace www.backupserver.com.Repository
                 throw new InvalidOperationException("User is not authenticated.");
             }
 
-            string url = StaticEndpoint.BaseUrl + $"/BackupJob/GetCompanyBackupJobDetail?id={backupJobId}";
+            string url = StaticEndpoint.BaseUrl + $"/BackupJob/GetCompanyBackupJobDetail?backupJobId={backupJobId}";
             var httpClient = _httpClientFactory.CreateClient("CustomHttpClient");
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -90,8 +90,18 @@ namespace www.backupserver.com.Repository
             var httpClient = _httpClientFactory.CreateClient("CustomHttpClient");
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
+            //Console.WriteLine("SaveCompanyBackupJobDetail");
+            //string jsonString = JsonSerializer.Serialize(oBackupJobDTO, new JsonSerializerOptions { WriteIndented = true });
+            //Console.WriteLine(jsonString);
+            //Console.WriteLine(oBackupJobDTO);
             var response = await httpClient.PostAsJsonAsync(url, oBackupJobDTO);
-
+            Console.WriteLine("response 1 1");
+            Console.WriteLine(response);
+            Console.WriteLine(response.Content);
+            Console.WriteLine(oBackupJobDTO);
+            string jsonString = JsonSerializer.Serialize(oBackupJobDTO, new JsonSerializerOptions { WriteIndented = true });
+            Console.WriteLine("jsonString");
+            Console.WriteLine(jsonString);
             ApiResponse apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
             return apiResponse;
         }

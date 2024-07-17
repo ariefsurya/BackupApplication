@@ -5,6 +5,9 @@ using RabbitMqProductApi.RabbitMQ;
 using Model;
 using Model.Services;
 using Microsoft.AspNetCore.Authorization;
+using TodosApi.Services.Redis;
+using Model.Enum;
+using TodosApi.Data;
 
 namespace BackupApi.Controllers
 {
@@ -12,17 +15,87 @@ namespace BackupApi.Controllers
     [Route("[controller]")]
     public class BackupRunnerController : ControllerBase
     {
+        private readonly IAuthUserService _authUserService;
         private readonly IBackupHistoryServices _backupHistoryServices;
+        private readonly IBackupJobServices _backupJobServices;
         private readonly ITargetBackupServices _targetBackupServices;
         private readonly IConfiguration _configuration;
         private readonly IRabitMQProducer _rabitMQProducer;
 
-        public BackupRunnerController(IConfiguration configuration, IRabitMQProducer rabitMQProducer, ITargetBackupServices targetBackupServices, IBackupHistoryServices backupHistoryServices)
+        private ResponseHandler responseHandler = new ResponseHandler();
+        public BackupRunnerController(IConfiguration configuration, IRabitMQProducer rabitMQProducer, ITargetBackupServices targetBackupServices, IBackupHistoryServices backupHistoryServices, IAuthUserService authUserService, IBackupJobServices backupJobServices)
         {
             _configuration = configuration;
             _rabitMQProducer = rabitMQProducer;
             _targetBackupServices = targetBackupServices;
             _backupHistoryServices = backupHistoryServices;
+            _authUserService = authUserService;
+            _backupJobServices = backupJobServices;
+        }
+
+        [HttpPost("RunBackupJobServerByUser")]
+        [Authorize]
+        public async Task<IActionResult> RunBackupJobServerByUser(int backupJobId)
+        {
+            try
+            {
+                var user = await _authUserService.GetUserDetail(User);
+                if (user == null)
+                {
+                    throw new UnauthorizedAccessException();
+                }
+
+                BackupJob oBackupJob = await _backupJobServices.GetBackupJobById(backupJobId, user.CompanyId);
+                if (oBackupJob == null)
+                    throw new UnauthorizedAccessException();
+                TargetBackup oTargetBackup = await _targetBackupServices.GetTargetBackupByBackupJobId(backupJobId, user.CompanyId);
+                if (oTargetBackup == null)
+                    throw new UnauthorizedAccessException();
+
+                BackupHistory oBackupHistory = new BackupHistory
+                {
+                    BackupJobId = oBackupJob.Id,
+                    BackupJobName = oBackupJob.BackupJobName,
+                    SourceFilePath = oTargetBackup.SourceFilePath,
+                    TargetFolderPath = oTargetBackup.TargetFolderPath,
+                    TargetServerIp = oTargetBackup.TargetServerIp,
+                    TargetBackupId = oTargetBackup.Id,
+                    BackupSchedulerId = 0,
+                    BackupStatusId = (int)EnumBackupStatus.Started,
+                    CompanyId = user.CompanyId,
+                    CreatedBy = user.Id,
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedDate = DateTime.UtcNow
+                };
+                BackupHistory result = await _backupHistoryServices.AddBackupHistory(oBackupHistory);
+                //send the inserted product data to the queue and consumer will listening this data from queue
+                await _rabitMQProducer.SendBackupMessage(oTargetBackup);
+                return responseHandler.ApiReponseHandler(result);
+                //return Ok(new { Message = "Database backup completed successfully asd", Path = Path.Combine(oTargetBackup.SourceFilePath, oTargetBackup.TargetFolderPath) });
+            }
+            catch (Exception ex)
+            {
+                throw;
+                //return StatusCode(500, new { Message = "Error backing up sendToBackupServer", Error = ex.Message });
+            }
+        }
+
+        [HttpPost("sendBackupHistory")]
+        public async Task<IActionResult> sendBackupHistory(BackupHistory oBackupResult)
+        {
+            try
+            {
+                oBackupResult.CreatedDate = DateTime.UtcNow;
+                oBackupResult.UpdatedDate = DateTime.UtcNow;
+                BackupHistory result = await _backupHistoryServices.AddBackupHistory(oBackupResult);
+                //send the inserted product data to the queue and consumer will listening this data from queue
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                throw;
+                //return StatusCode(500, new { Message = "Error backing up sendBackupHistory", Error = ex.Message });
+            }
         }
 
 
@@ -159,22 +232,5 @@ namespace BackupApi.Controllers
         }
 
 
-        [HttpPost("sendBackupHistory")]
-        public async Task<IActionResult> sendBackupHistory(BackupHistory oBackupHistory)
-        {
-            try
-            {
-                oBackupHistory.CreatedBy = 0;
-                oBackupHistory.CreatedDate = DateTime.UtcNow;
-                oBackupHistory.UpdatedDate = DateTime.UtcNow;
-                BackupHistory result = await _backupHistoryServices.AddBackupHistory(oBackupHistory);
-                //send the inserted product data to the queue and consumer will listening this data from queue
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "Error backing up sendBackupHistory", Error = ex.Message });
-            }
-        }
     }
 }

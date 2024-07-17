@@ -7,7 +7,7 @@
         public int CompanyId { get; set; }
         public int BackupSchedulerType { get; set; }
         public string SchedulerDateDaySet { get; set; }
-        public TimeOnly SchedulerClockTimeSet { get; set; }
+        public TimeSpan SchedulerClockTimeSet { get; set; }
         public DateTime SchedulerStartDate { get; set; }
         public int StatusId { get; set; }
         public int CreatedBy { get; set; }

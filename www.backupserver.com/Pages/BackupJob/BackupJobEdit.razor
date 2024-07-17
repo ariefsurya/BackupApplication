@@ -2,6 +2,7 @@
 @layout ProtectedLayout
 @inject IBackupJobRepository _backupJobRepo
 @inject NavigationManager Navigation
+@inject SweetAlertService Swal
 @using Radzen.Blazor
 @using www.backupserver.com.Helper
 
@@ -11,106 +12,130 @@
     <Tab Title="Source Backup" Active="true" Name="SourceBackup">
         <Content>
             <EditForm class="p-3" Model="@oBackupJobDetail" OnValidSubmit="ValidateSourceBackup">
+                <CustomValidation @ref="customValidationSource" />
                 <div class="d-flex">
                     <div class="w-15">
                         <div class="pb-2">Backup Job Name</div>
                         <div class="pb-2">Source Server Ip</div>
                         <div class="pb-2">Source File</div>
                     </div>
-                    <div class="w-50">
-                        <div class="pb-2"><InputText @bind-Value="oBackupJobDetail.BackupJobName" /></div>
-                        <div class="pb-2"><InputText @bind-Value="oTargetBackup.SourceServerIp" /></div>
-                        <div class="pb-2"><InputText @bind-Value="oTargetBackup.SourceFilePath" /></div>
-                    </div>
-                    <div class="w-25">
-                        <div class="pb-2"><InputText @bind-Value="oBackupJobDetail.BackupJobName" /></div>
-                        <div class="pb-2"><InputText @bind-Value="oTargetBackup.SourceServerIp" /></div>
-                        <div class="pb-2"><InputText @bind-Value="oTargetBackup.SourceFilePath" /></div>
+                    <div class="w-75">
+                        <div class="d-flex pb-2">
+                            <InputText class="w-25 me-2" placeholder="SqlDatabase Backup Job" @bind-Value="oBackupJobDetail.BackupJobName" />
+                            <ValidationMessage For="@(() => oBackupJobDetail.BackupJobName)" />
+                        </div>
+                        <div class="d-flex pb-2">
+                            <InputText class="w-25 me-2" placeholder="192.168.1.50" @bind-Value="oBackupJobDetail.SourceServerIp" />
+                            <ValidationMessage For="@(() => oBackupJobDetail.SourceServerIp)" />
+                        </div>
+                        <div class="d-flex pb-2">
+                            <InputText class="w-25 me-2" placeholder="C:/Database/SqlServer1.bak" @bind-Value="oBackupJobDetail.SourceFilePath" />
+                            <ValidationMessage For="@(() => oBackupJobDetail.SourceFilePath)" />
+                        </div>
                     </div>
                 </div>
-                <CustomValidation @ref="customValidation" />
                 <div class="pt-2">
                     <button type="submit" class="btn btn-success">Next</button>
                 </div>
             </EditForm>
         </Content>
     </Tab>
-    <Tab Title="Target Backup" Name="TargetBackup">
+    <Tab Title="Target Backup" Name="TargetBackup" Disabled="@isTargetBackupTabDisabled">
         <Content>
-            <EditForm Model="@oTargetBackup" OnValidSubmit="ValidateTargetBackup">
+            <EditForm class="p-3" Model="@oTargetBackup" OnValidSubmit="ValidateTargetBackup">
+                <CustomValidation @ref="customValidationTarget" />
                 <div class="d-flex">
                     <div class="w-15">
-                        <div>Target Server Ip</div>
-                        <div>Target Folder Path</div>
-                        <div>Server Username</div>
-                        <div>Server Password</div>
+                        <div class="pb-2">Target Server Ip</div>
+                        <div class="pb-2">Target Folder Path</div>
+                        <div class="pb-2">Server Username</div>
+                        <div class="pb-2">Server Password</div>
                     </div>
-                    <div class="w-50">
-                        <div><InputText @bind-Value="oTargetBackup.TargetServerIp" /></div>
-                        <div><InputText @bind-Value="oTargetBackup.TargetFolderPath" /></div>
-                        <div><InputText type="password" @bind-Value="oTargetBackup.TargetUsername" /></div>
-                        <div><InputText type="password" @bind-Value="oTargetBackup.TargetPassword" /></div>
+                    <div class="w-75">
+                        <div class="d-flex pb-2">
+                            <InputText class="w-25 me-2" placeholder="192.168.1.51" @bind-Value="oTargetBackup.TargetServerIp" />
+                            <ValidationMessage For="@(() => oTargetBackup.TargetServerIp)" />
+                        </div>
+                        <div class="d-flex pb-2">
+                            <InputText class="w-25 me-2" autocomplete="new-password" placeholder="D:/BackupDatabase" @bind-Value="oTargetBackup.TargetFolderPath" />
+                            <ValidationMessage For="@(() => oTargetBackup.TargetFolderPath)" />
+                        </div>
+                        <div class="d-flex pb-2">
+                            <InputText class="w-25 me-2" autocomplete="new-password" placeholder="Target Server Username" type="password" @bind-Value="oTargetBackup.TargetUsername" />
+                            <ValidationMessage For="@(() => oTargetBackup.TargetUsername)" />
+                        </div>
+                        <div class="d-flex pb-2">
+                            <InputText class="w-25 me-2" autocomplete="new-password" placeholder="Target Server Password" type="password" @bind-Value="oTargetBackup.TargetPassword" />
+                            <ValidationMessage For="@(() => oTargetBackup.TargetPassword)" />
+                        </div>
                     </div>
                 </div>
                 <div>
                     <button class="btn btn-primary" @onclick="ShowFirstTabAsync">Back</button>
-                    <button class="btn btn-success">Next</button>
+                    <button type="submit" class="btn btn-success">Next</button>
                 </div>
             </EditForm>
         </Content>
     </Tab>
-    <Tab Title="Scheduler" Name="Scheduler">
+    <Tab Title="Scheduler" Name="Scheduler" Disabled="@isSchedulerTabDisabled">
         <Content>
-            <EditForm Model="@oTargetBackup" OnValidSubmit="ValidateBackupSchedule">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" bind="@oBackupJobDetail.IsUseScheduler">
-                    <label class="form-check-label" for="flexCheckDefault">
-                        Use Scheduler Backup
-                    </label>
-
-                    <div>
-                        Run This Job 
-                        <select class="form-select" aria-label="Default select example">
-                            <option selected>Open this select menu</option>
-                            <option value="1">Daily</option>
-                            <option value="2">Weekly</option>
-                            <option value="3">Monthly</option>
-                        </select>
+            <EditForm class="p-3" Model="@oBackupScheduler" OnValidSubmit="ValidateBackupSchedule">
+                <CustomValidation @ref="customValidationScheduler" />
+                <input class="border-2 border-black form-check-input pb-2" type="checkbox" @bind-value="@oBackupJobDetail.IsUseScheduler">
+                <label class="form-check-label pb-2" for="flexCheckDefault">
+                    Use Scheduler Backup
+                </label>
+                @if (oBackupJobDetail.IsUseScheduler)
+                {
+                    <div class="d-flex pb-2">
+                        <div class="w-15">
+                            Run This Job
+                        </div>
+                        <div class="w-75 d-flex">
+                            <select aria-label="select scheduler Type" @bind="oBackupScheduler.BackupSchedulerType"
+                                class="form-select w-50 me-2 @((oBackupScheduler.BackupSchedulerType == 0) ? "border-danger" : "border-black")">
+                                <option value="0">select scheduler Type</option>
+                                <option value="1">Daily</option>
+                                <option value="2">Weekly</option>
+                                <option value="3">Monthly</option>
+                            </select>
+                            <ValidationMessage For="@(() => oBackupScheduler.BackupSchedulerType)" />
+                        </div>
                     </div>
-
-                    <div>
-                        Date
-                        @* <SfMultiSelect TItem="DropDownValue" TValue="string[]" Placeholder="e.g. Sunday" ShowSelectAll=true SelectAllText="Select All"
-                                       UnSelectAllText="unSelect All" Mode="VisualMode.CheckBox" DataSource="@weekDates">
-                            <MultiSelectFieldSettings Text="Name" Value="Code"></MultiSelectFieldSettings>
-                        </SfMultiSelect> *@
-
-@*                         <RadzenLabel Text="Select Values" Component="DropDownMultiple" Style="margin-right: 8px; vertical-align: middle;" />
-                        <RadzenDropDown @bind-Value=@selectedWeekDay 
-                                        Data=@weekDates 
-                                        TextProperty="@nameof(DropDownValue.Name)" 
-                                        ValueProperty="@nameof(DropDownValue.Code)" 
-                                        Name="DropDownMultiple"
-                                        Multiple=true AllowClear=true 
-                                        Placeholder="Select products" Style="width: 100%; max-width: 400px;" />
- *@
-                        <RadzenDropDown Data="@weekDates"
-                                        TextProperty="Name"
-                                        ValueProperty="Code"
-                                        @bind-Value="selectedWeekDay"
-                                        Multiple=true AllowClear=true
-                                        Placeholder="Select a day..." />
+                    <div class="d-flex pb-2">
+                        <div class="w-15">
+                            Run At Date Day
+                        </div>
+                        <div class="w-75 d-flex">
+                            <RadzenDropDown class="@((selectedWeekDay.Count() == 0) ? "w-50 me-2 border-danger" : "w-50 me-2 border-black")"
+                                            Data="@weekDates"
+                                            TextProperty="Name"
+                                            ValueProperty="Code"
+                                            @bind-Value="selectedWeekDay"
+                                            Multiple=true AllowClear=true
+                                            Placeholder="Select a day..." />
+                            <ValidationMessage For="@(() => oBackupScheduler.SchedulerDateDaySet)" />
+                        </div>
                     </div>
-                    <div>
-                        Clock
-                        <TimeInput TValue="TimeOnly" @bind-Value="@oBackupScheduler.SchedulerClockTimeSet" />
+                    <div class="d-flex pb-2">
+                        <div class="w-15">
+                            Run At Time (Clock)
+                        </div>
+                        <div class="w-75">
+                            <TimeInput class="w-auto border-black" TValue="TimeOnly" @bind-Value="@schedulerClockSet" />
+                        </div>
+                        @* <ValidationMessage For="@(() => oBackupScheduler.SchedulerClockTimeSet)" /> *@
                     </div>
-
-                    <div>
-                        Scheduler Start Date
-                        <DateInput TValue="DateTime" @bind-Value="@oBackupScheduler.SchedulerStartDate" Placeholder="Enter Date" />
+                    <div class="d-flex pb-2">
+                        <div class="w-15">
+                            Scheduler Start Date
+                        </div>
+                        <div class="w-75 d-flex">
+                            <DateInput class="w-25 border-black me-2" TValue="DateTime" @bind-Value="@oBackupScheduler.SchedulerStartDate" Placeholder="Enter Date" />
+                            <ValidationMessage For="@(() => oBackupScheduler.SchedulerStartDate)" />
+                        </div>
                     </div>
-                </div>
+                }
                 <div>
                     <button class="btn btn-primary" @onclick="ShowTargetBackupAsync">Back</button>
                     <button type="submit" class="btn btn-success">Submit</button>
@@ -132,14 +157,19 @@
     };
 
     int backupJobId = 0;
+    private bool isTargetBackupTabDisabled = true;
+    private bool isSchedulerTabDisabled = true;
     Tabs tabs;
     BackupJobDTO oBackupJobDetail = new BackupJobDTO();
     TargetBackup oTargetBackup = new TargetBackup();
     BackupScheduler oBackupScheduler = new BackupScheduler();
     List<string> selectedWeekDay = new List<string>();
+    TimeOnly schedulerClockSet = new TimeOnly();
 
 
-    private CustomValidation customValidation;
+    private CustomValidation customValidationSource;
+    private CustomValidation customValidationTarget;
+    private CustomValidation customValidationScheduler;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -151,6 +181,7 @@
                 backupJobId = Int32.Parse(id);
                 await FetchBackupJobDataDetail();
             }
+            oBackupScheduler.SchedulerStartDate = DateTime.Now;
         }
     }
 
@@ -177,31 +208,119 @@
 
     private async Task ValidateSourceBackup()
     {
-        customValidation?.ClearErrors();
-
+        customValidationSource?.ClearErrors();
         var errors = new Dictionary<string, List<string>>();
-        errors.Add(nameof(oBackupJobDetail.BackupJobName),
-            new() { "Email already exists!" });
+
+        if (string.IsNullOrEmpty(oBackupJobDetail.BackupJobName))
+            errors.Add(nameof(oBackupJobDetail.BackupJobName), new() { "Backup Job Name must be filled" });
+        if (string.IsNullOrEmpty(oBackupJobDetail.SourceServerIp))
+            errors.Add(nameof(oBackupJobDetail.SourceServerIp), new() { "Source Server Ip must be filled" });
+        if (string.IsNullOrEmpty(oBackupJobDetail.SourceFilePath))
+            errors.Add(nameof(oBackupJobDetail.SourceFilePath), new() { "Source File must be filled" });
 
         if (errors.Any())
         {
-            customValidation?.DisplayErrors(errors);
+            isTargetBackupTabDisabled = true;
+            customValidationSource?.DisplayErrors(errors);
         }
         else
         {
+            isTargetBackupTabDisabled = false;
             await tabs.ShowTabByNameAsync("TargetBackup");
         }
     }
     private async Task ValidateTargetBackup()
     {
-        await tabs.ShowTabByNameAsync("Scheduler");
+        customValidationTarget?.ClearErrors();
+        var errors = new Dictionary<string, List<string>>();
+
+        if (string.IsNullOrEmpty(oTargetBackup.TargetServerIp))
+            errors.Add(nameof(oTargetBackup.TargetServerIp), new() { "Target Server Ip must be filled" });
+        if (string.IsNullOrEmpty(oTargetBackup.TargetFolderPath))
+            errors.Add(nameof(oTargetBackup.TargetFolderPath), new() { "Target Folder must be filled" });
+        if (string.IsNullOrEmpty(oTargetBackup.TargetUsername))
+            errors.Add(nameof(oTargetBackup.TargetUsername), new() { "Target Server Username must be filled" });
+        if (string.IsNullOrEmpty(oTargetBackup.TargetPassword))
+            errors.Add(nameof(oTargetBackup.TargetPassword), new() { "Target Server Password must be filled" });
+
+        if (errors.Any())
+        {
+            isSchedulerTabDisabled = true;
+            customValidationTarget?.DisplayErrors(errors);
+        }
+        else
+        {
+            isSchedulerTabDisabled = false;
+            await tabs.ShowTabByNameAsync("Scheduler");
+        }
     }
     private async Task ValidateBackupSchedule()
     {
-        await tabs.ShowTabByNameAsync("Scheduler");
+        customValidationScheduler?.ClearErrors();
+        var errors = new Dictionary<string, List<string>>();
+
+        if (oBackupJobDetail.IsUseScheduler)
+        {
+            if (oBackupScheduler.BackupSchedulerType == null || oBackupScheduler.BackupSchedulerType == 0)
+                errors.Add(nameof(oBackupScheduler.BackupSchedulerType), new() { "Scheduler Type must be filled" });
+            if (selectedWeekDay.Count == 0) {
+                errors.Add(nameof(oBackupScheduler.SchedulerDateDaySet), new() { "Scheduler Date must be filled" });
+                // errors.Add(nameof(selectedWeekDay), new() { "Scheduler Date must be filled" });
+            }
+            if (oBackupScheduler.SchedulerStartDate == DateTime.MinValue)
+                errors.Add(nameof(oBackupScheduler.SchedulerStartDate), new() { "Scheduler Start Date must be filled" });
+        }
+
+        if (errors.Any())
+        {
+            customValidationScheduler?.DisplayErrors(errors);
+        }
+        else
+        {
+            await HandleSaveBackupJob();
+        }
     }
     private async Task ShowFirstTabAsync() => await tabs.ShowFirstTabAsync();
     private async Task ShowTargetBackupAsync() => await tabs.ShowTabByNameAsync("TargetBackup");
+
+    protected async Task HandleSaveBackupJob()
+    {
+        oTargetBackup.SourceServerIp = oBackupJobDetail.SourceServerIp;
+        oTargetBackup.SourceFilePath = oBackupJobDetail.SourceFilePath;
+        oBackupJobDetail.oTargetBackup = oTargetBackup;
+        oBackupScheduler.SchedulerDateDaySet = string.Join(";", selectedWeekDay);
+        oBackupScheduler.SchedulerClockTimeSet = schedulerClockSet.ToTimeSpan();
+        oBackupJobDetail.oBackupScheduler = oBackupScheduler;
+
+        var response = await _backupJobRepo.SaveCompanyBackupJobDetail(oBackupJobDetail);
+        if (response.Code != 200)
+        {
+            SweetAlertResult result2 = await Swal.FireAsync(new SweetAlertOptions
+                {
+                    Title = "Somything Went Wrong",
+                    Text = "Backup Job are failed to saved",
+                    Icon = SweetAlertIcon.Error,
+                    ShowCancelButton = false,
+                    ConfirmButtonText = "Ok",
+                }
+            );
+            return;
+        }
+
+        SweetAlertResult result = await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Save Backup Job Success",
+                Text = "Backup Job are successfully saved",
+                Icon = SweetAlertIcon.Success,
+                ShowCancelButton = false,
+                ConfirmButtonText = "Ok",
+            }
+        );
+        if (!string.IsNullOrEmpty(result.Value) || string.IsNullOrEmpty(result.Value))
+        {
+            Navigation.NavigateTo("/dashboard");
+        }
+    }
 
     public class DropDownValue
     {
