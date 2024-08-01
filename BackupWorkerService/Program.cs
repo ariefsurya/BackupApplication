@@ -46,18 +46,47 @@ using BackupWorkerService;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 using static BackupWorkerService.Worker;
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        CreateHostBuilder(args).Build().Run();
+        Directory.CreateDirectory("C:\\logs");
+        Serilog.Debugging.SelfLog.Enable(msg => File.AppendAllText("C:\\logs\\serilog-selflog.txt", msg + Environment.NewLine));
+
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+            .WriteTo.File("C:\\logs\\myapp.txt", rollingInterval: RollingInterval.Day)
+            .CreateLogger();
+
+        try
+        {
+            Log.Information("Starting up");
+            CreateHostBuilder(args).Build().Run();
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Application start-up failed");
+        }
+        finally
+        {
+            Log.Information("Shutting down");
+            Log.CloseAndFlush();
+        }
     }
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
             .UseWindowsService()
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddConsole();
+                logging.SetMinimumLevel(LogLevel.Information);
+            })
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddOptions<WorkerOptions>()

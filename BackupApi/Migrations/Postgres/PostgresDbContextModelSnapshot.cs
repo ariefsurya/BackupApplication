@@ -52,6 +52,9 @@ namespace BackupApi.Migrations.Postgres
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Message")
+                        .HasColumnType("text");
+
                     b.Property<string>("SourceFilePath")
                         .IsRequired()
                         .HasColumnType("text");

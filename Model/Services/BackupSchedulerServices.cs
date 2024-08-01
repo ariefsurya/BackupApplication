@@ -20,10 +20,24 @@ namespace Model.Services
             _dbContext = dbContext;
         }
 
+        //public async Task<BackupScheduler> GetBackupSchedulerByBackupJobId(int backupJobId, int companyId)
+        //{
+        //    return await _dbContext.BackupScheduler.FirstOrDefaultAsync(x => x.BackupJobId == backupJobId && x.CompanyId == companyId);
+        //}
         public async Task<BackupScheduler> GetBackupSchedulerByBackupJobId(int backupJobId, int companyId)
         {
-            return await _dbContext.BackupScheduler.FirstOrDefaultAsync(x => x.BackupJobId == backupJobId && x.CompanyId == companyId);
+            var scheduler = await _dbContext.BackupScheduler
+                .FirstOrDefaultAsync(x => x.BackupJobId == backupJobId && x.CompanyId == companyId);
+
+            if (scheduler != null)
+            {
+                Console.WriteLine($"SchedulerDateDaySet: {scheduler.SchedulerDateDaySet}");
+                Console.WriteLine($"SchedulerClockTimeSet: {scheduler.SchedulerClockTimeSet}");
+            }
+
+            return scheduler;
         }
+
 
         public async Task<BackupScheduler> AddBackupScheduler(BackupScheduler oBackupScheduler)
         {

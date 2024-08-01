@@ -15,5 +15,17 @@ namespace Model
         public DbSet<BackupHistory> BackupHistory { get; set; }
         public DbSet<BackupJob> BackupJob { get; set; }
         public DbSet<BackupScheduler> BackupScheduler { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<BackupScheduler>()
+                .Property(b => b.SchedulerClockTimeSet)
+                .HasColumnType("interval");
+
+            modelBuilder.Entity<BackupScheduler>()
+                .Property(b => b.SchedulerDateDaySet)
+                .HasColumnType("text");
+
+        }
     }
 }

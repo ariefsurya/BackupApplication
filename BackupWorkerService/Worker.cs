@@ -9,6 +9,7 @@ using System.Net.Http.Json;
 using System.Threading.Channels;
 using Renci.SshNet;
 using Model.Enum;
+using Serilog;
 
 namespace BackupWorkerService
 {
@@ -60,6 +61,7 @@ namespace BackupWorkerService
             }
             catch (Exception ex)
             {
+                Log.Information("Error connecting to RabbitMQ");
                 _logger.LogError(ex, "Error connecting to RabbitMQ.");
                 throw;
             }
@@ -78,6 +80,7 @@ namespace BackupWorkerService
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
 
+            Log.Information("connected to RabbitMQ");
             var exchangeName = "backup_exchange." + _companyId;
             var queueName = "backupQueue." + _companyId;
             var routingKey = "backup.database." + _companyId;
@@ -92,18 +95,21 @@ namespace BackupWorkerService
             var queueName = "backupQueue." + _companyId;
             while (!stoppingToken.IsCancellationRequested)
             {
-                _logger.LogInformation("ExecuteAsync");
+                //_logger.LogInformation("ExecuteAsync");
 
                 var consumer = new EventingBasicConsumer(_channel);
                 consumer.Received += async (model, ea) =>
                 {
+                    Log.Information("new Message");
                     _logger.LogInformation("new Message");
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
                     var task = JsonSerializer.Deserialize<TargetBackup>(message);
 
+                    Log.Information("Received message: {Message}", message);
                     _logger.LogInformation("Received message: {Message}", message);
 
+                    NotifBackupTaskReceived(task);
                     // Process the backup task
                     await BackupDatabase(task);
                 };
@@ -113,16 +119,52 @@ namespace BackupWorkerService
                 await Task.CompletedTask;
             }
         }
+        private async Task NotifBackupTaskReceived(TargetBackup oTargetBackup)
+        {
+            try
+            {
+                Log.Information("new NotifBackupTaskReceived");
+                _logger.LogInformation("new NotifBackupTaskReceived");
+                HttpClientHandler handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+                };
+                using HttpClient httpClient = new HttpClient(handler);
+                HttpResponseMessage response = null;
+                response = await httpClient.PostAsJsonAsync("https://localhost:5001/BackupRunner/sendBackupHistory", new BackupHistory
+                {
+                    BackupJobId = oTargetBackup.BackupJobId,
+                    BackupJobName = oTargetBackup.TargetFileName.ToString(),
+                    SourceFilePath = oTargetBackup.SourceFilePath,
+                    TargetFolderPath = oTargetBackup.TargetFolderPath,
+                    TargetServerIp = oTargetBackup.TargetServerIp,
+                    TargetBackupId = oTargetBackup.Id,
+                    BackupSchedulerId = 0,
+                    BackupStatusId = (int)EnumBackupStatus.TaskReceived,
+                    CompanyId = Int32.Parse(_companyId.Replace("company-", "")),
+                    CreatedBy = -2,
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedDate = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Information("error NotifBackupTaskReceived: {Message}", ex.Message);
+                _logger.LogInformation("error NotifBackupTaskReceived: {Message}", ex.Message);
+            }
+        }
 
         private async Task BackupDatabase(TargetBackup oTargetBackup)
         {
             // Implement your backup logic here
+            Log.Information($"Backing up database '{oTargetBackup.SourceFilePath}' to '{oTargetBackup.TargetFolderPath}'");
             _logger.LogInformation($"Backing up database '{oTargetBackup.SourceFilePath}' to '{oTargetBackup.TargetFolderPath}'");
-            var isSuccessServerBackup = await BackupDatabaseServerToServer(oTargetBackup);
+            string isSuccessServerBackup = await BackupDatabaseServerToServer(oTargetBackup);
 
             // Example backup logic (this should be replaced with actual backup code)
             System.Threading.Thread.Sleep(1000); // Simulate time taken to backup
 
+            Log.Information($"api history Backup of database '{oTargetBackup.SourceFilePath}' completed");
             _logger.LogInformation($"api history Backup of database '{oTargetBackup.SourceFilePath}' completed");
             HttpClientHandler handler = new HttpClientHandler
             {
@@ -130,9 +172,9 @@ namespace BackupWorkerService
             };
             using HttpClient httpClient = new HttpClient(handler);
             HttpResponseMessage response = null;
-            if (isSuccessServerBackup)
+            if (string.IsNullOrEmpty(isSuccessServerBackup))
             {
-                response = await httpClient.PostAsJsonAsync("https://localhost:5001/backup/sendBackupHistory", new BackupHistory
+                response = await httpClient.PostAsJsonAsync("https://localhost:5001/BackupRunner/sendBackupHistory", new BackupHistory
                 {
 
                     BackupJobId = oTargetBackup.BackupJobId,
@@ -145,13 +187,14 @@ namespace BackupWorkerService
                     BackupStatusId = (int)EnumBackupStatus.Success,
                     CompanyId = Int32.Parse(_companyId.Replace("company-", "")),
                     CreatedBy = -2,
+                    Message = isSuccessServerBackup,
                     CreatedDate = DateTime.UtcNow,
                     UpdatedDate = DateTime.UtcNow
                 });
             }
             else
             {
-                response = await httpClient.PostAsJsonAsync("https://localhost:5001/backup/sendBackupHistory", new BackupHistory
+                response = await httpClient.PostAsJsonAsync("https://localhost:5001/BackupRunner/sendBackupHistory", new BackupHistory
                 {
 
                     BackupJobId = oTargetBackup.BackupJobId,
@@ -165,21 +208,24 @@ namespace BackupWorkerService
                     CompanyId = Int32.Parse(_companyId.Replace("company-", "")),
                     CreatedBy = -2,
                     CreatedDate = DateTime.UtcNow,
-                    UpdatedDate = DateTime.UtcNow
+                    UpdatedDate = DateTime.UtcNow,
+                    Message = isSuccessServerBackup
                 });
             }
 
             if (response.IsSuccessStatusCode)
             {
+                Log.Information("Notified API about the backup completion successfully.");
                 _logger.LogInformation("Notified API about the backup completion successfully.");
             }
             else
             {
+                Log.Information("Failed to notify API about the backup completion.");
                 _logger.LogError("Failed to notify API about the backup completion.");
             }
         }
 
-        private async Task<bool> BackupDatabaseServerToServer(TargetBackup oTargetBackup)
+        private async Task<string> BackupDatabaseServerToServer(TargetBackup oTargetBackup)
         {
 
             // Define the source file path
@@ -215,13 +261,15 @@ namespace BackupWorkerService
                     scp.Disconnect();
                 }
 
+                Log.Information($"File copied successfully from {sourceFilePath} to {serverIp}:{targetFolderPath}");
                 _logger.LogInformation($"File copied successfully from {sourceFilePath} to {serverIp}:{targetFolderPath}");
-                return true;
+                return "";
             }
             catch (Exception ex)
             {
+                Log.Information($"Error copying file: {ex.Message}");
                 _logger.LogError($"Error copying file: {ex.Message}");
-                return false;
+                return ex.Message.ToString();
             }
         }
 

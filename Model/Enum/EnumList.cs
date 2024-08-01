@@ -21,7 +21,7 @@ namespace Model.Enum
     public enum EnumBackupStatus
     {
         Started = 1,
-        Cancelled = 2,
+        TaskReceived = 2,
         Failed = 3,
         Success = 4
     }

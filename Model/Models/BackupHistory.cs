@@ -13,6 +13,7 @@
         public int BackupStatusId { get; set; }
         public int CompanyId { get; set; }
         public int CreatedBy { get; set; }
+        public string? Message { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime UpdatedDate { get; set; }
     }

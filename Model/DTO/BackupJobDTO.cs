@@ -26,6 +26,7 @@
                 Id = oBackupJob.Id,
                 BackupJobName = oBackupJob.BackupJobName,
                 CompanyId = oBackupJob.CompanyId,
+                IsUseScheduler = oBackupJob.IsUseScheduler,
                 StatusId = oBackupJob.StatusId,
                 LastBackupDate = oBackupJob.LastBackupDate,
                 LastBackupStatus = oBackupJob.LastBackupStatus,

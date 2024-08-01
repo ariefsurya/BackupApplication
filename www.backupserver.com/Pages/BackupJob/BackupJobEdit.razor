@@ -11,7 +11,7 @@
 <Tabs @ref="tabs" EnableFadeEffect="true">
     <Tab Title="Source Backup" Active="true" Name="SourceBackup">
         <Content>
-            <EditForm class="p-3" Model="@oBackupJobDetail" OnValidSubmit="ValidateSourceBackup">
+            <EditForm class="p-3" Model="@oBackupJobDetail" OnValidSubmit="() => ValidateSourceBackup()">
                 <CustomValidation @ref="customValidationSource" />
                 <div class="d-flex">
                     <div class="w-15">
@@ -40,9 +40,10 @@
             </EditForm>
         </Content>
     </Tab>
-    <Tab Title="Target Backup" Name="TargetBackup" Disabled="@isTargetBackupTabDisabled">
+    @* Disabled="@isTargetBackupTabDisabled" *@
+    <Tab Title="Target Backup" Name="TargetBackup">
         <Content>
-            <EditForm class="p-3" Model="@oTargetBackup" OnValidSubmit="ValidateTargetBackup">
+            <EditForm class="p-3" Model="@oTargetBackup" OnValidSubmit="() => ValidateTargetBackup()">
                 <CustomValidation @ref="customValidationTarget" />
                 <div class="d-flex">
                     <div class="w-15">
@@ -71,17 +72,18 @@
                     </div>
                 </div>
                 <div>
-                    <button class="btn btn-primary" @onclick="ShowFirstTabAsync">Back</button>
+                    <button type="button" class="btn btn-primary" @onclick="ShowFirstTabAsync">Back</button>
                     <button type="submit" class="btn btn-success">Next</button>
                 </div>
             </EditForm>
         </Content>
     </Tab>
-    <Tab Title="Scheduler" Name="Scheduler" Disabled="@isSchedulerTabDisabled">
+    @* Disabled="@isSchedulerTabDisabled" *@
+    <Tab Title="Scheduler" Name="Scheduler">
         <Content>
             <EditForm class="p-3" Model="@oBackupScheduler" OnValidSubmit="ValidateBackupSchedule">
                 <CustomValidation @ref="customValidationScheduler" />
-                <input class="border-2 border-black form-check-input pb-2" type="checkbox" @bind-value="@oBackupJobDetail.IsUseScheduler">
+                <input class="border-2 border-black form-check-input pb-2" type="checkbox" @bind="@oBackupJobDetail.IsUseScheduler">
                 <label class="form-check-label pb-2" for="flexCheckDefault">
                     Use Scheduler Backup
                 </label>
@@ -137,7 +139,7 @@
                     </div>
                 }
                 <div>
-                    <button class="btn btn-primary" @onclick="ShowTargetBackupAsync">Back</button>
+                    <button type="button" class="btn btn-primary" @onclick="ShowTargetBackupAsync">Back</button>
                     <button type="submit" class="btn btn-success">Submit</button>
                 </div>
             </EditForm>
@@ -176,12 +178,13 @@
         if (firstRender)
         {
             var id = GetQueryParm("id");
+            oBackupScheduler.SchedulerStartDate = DateTime.UtcNow.Date;
             if (!string.IsNullOrEmpty(id) && id != "0")
             {
                 backupJobId = Int32.Parse(id);
                 await FetchBackupJobDataDetail();
+                StateHasChanged();
             }
-            oBackupScheduler.SchedulerStartDate = DateTime.Now;
         }
     }
 
@@ -203,10 +206,19 @@
         }
 
         oBackupJobDetail = JsonConvert.DeserializeObject<BackupJobDTO>(response.Data.ToString());
+        oBackupJobDetail.SourceServerIp = oBackupJobDetail.oTargetBackup.SourceServerIp;
+        oBackupJobDetail.SourceFilePath = oBackupJobDetail.oTargetBackup.SourceFilePath;
+        oTargetBackup = oBackupJobDetail.oTargetBackup;
+        if (oBackupJobDetail.oBackupScheduler != null) {
+            oBackupScheduler = oBackupJobDetail.oBackupScheduler;
+            selectedWeekDay = oBackupScheduler.SchedulerDateDaySet.Split(";").ToList();
+            schedulerClockSet = TimeOnly.FromTimeSpan(oBackupScheduler.SchedulerClockTimeSet);
+            oBackupScheduler.SchedulerStartDate = oBackupScheduler.SchedulerStartDate.ToUniversalTime();
+        }
     }
 
 
-    private async Task ValidateSourceBackup()
+    private async Task ValidateSourceBackup(bool isSubmit = false)
     {
         customValidationSource?.ClearErrors();
         var errors = new Dictionary<string, List<string>>();
@@ -221,15 +233,19 @@
         if (errors.Any())
         {
             isTargetBackupTabDisabled = true;
+            await Task.Delay(200);
             customValidationSource?.DisplayErrors(errors);
+            await tabs.ShowFirstTabAsync();
         }
         else
         {
             isTargetBackupTabDisabled = false;
-            await tabs.ShowTabByNameAsync("TargetBackup");
+            await Task.Delay(200);
+            if (!isSubmit)
+                await tabs.ShowTabByNameAsync("TargetBackup");
         }
     }
-    private async Task ValidateTargetBackup()
+    private async Task ValidateTargetBackup(bool isSubmit = false)
     {
         customValidationTarget?.ClearErrors();
         var errors = new Dictionary<string, List<string>>();
@@ -246,16 +262,22 @@
         if (errors.Any())
         {
             isSchedulerTabDisabled = true;
+            await Task.Delay(200);
             customValidationTarget?.DisplayErrors(errors);
+            await tabs.ShowTabByNameAsync("TargetBackup");
         }
         else
         {
             isSchedulerTabDisabled = false;
-            await tabs.ShowTabByNameAsync("Scheduler");
+            await Task.Delay(200);
+            if (!isSubmit)
+                await tabs.ShowTabByNameAsync("Scheduler");
         }
     }
     private async Task ValidateBackupSchedule()
     {
+        await ValidateTargetBackup(true);
+        await ValidateSourceBackup(true);
         customValidationScheduler?.ClearErrors();
         var errors = new Dictionary<string, List<string>>();
 
@@ -280,7 +302,11 @@
             await HandleSaveBackupJob();
         }
     }
-    private async Task ShowFirstTabAsync() => await tabs.ShowFirstTabAsync();
+    private async Task ShowFirstTabAsync(){
+        isTargetBackupTabDisabled = true;
+        await Task.Delay(200);
+        await tabs.ShowFirstTabAsync();
+    }
     private async Task ShowTargetBackupAsync() => await tabs.ShowTabByNameAsync("TargetBackup");
 
     protected async Task HandleSaveBackupJob()

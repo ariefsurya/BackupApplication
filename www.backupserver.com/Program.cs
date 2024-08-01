@@ -48,6 +48,7 @@ builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStat
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
 builder.Services.AddScoped<IBackupJobRepository, BackupJobRepository>();
+builder.Services.AddScoped<IBackupRunnerRepository, BackupRunnerRepository>();
 //builder.Services.AddScoped<TokenStorage>();
 builder.Services.AddScoped<ProtectedSessionStorage>();
 builder.Services.AddScoped<ICookieService, CookieService>();

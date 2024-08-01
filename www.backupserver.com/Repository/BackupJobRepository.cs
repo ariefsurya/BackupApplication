@@ -9,7 +9,7 @@ namespace www.backupserver.com.Repository
     {
         public Task<ApiResponse> GetCompanyBackupJob(string search, int iPage, int iTake);
         public Task<ApiResponse> GetCompanyBackupJobDetail(int backupJobId);
-        public Task<ApiResponse> GetCompanyBackupJobHistory(int backupJobId);
+        public Task<ApiResponse> GetCompanyBackupJobHistory(int backupJobId, int iPage, int iTake);
         public Task<ApiResponse> SaveCompanyBackupJobDetail(BackupJobDTO oBackupJobDTO);
     }
 
@@ -60,7 +60,7 @@ namespace www.backupserver.com.Repository
 
             return apiResponse;
         }
-        public async Task<ApiResponse> GetCompanyBackupJobHistory(int backupJobId)
+        public async Task<ApiResponse> GetCompanyBackupJobHistory(int backupJobId, int iPage, int iTake)
         {
             var token = await _authStateProvider.GetAuthenticationTokenAsync();
             if (string.IsNullOrEmpty(token))
@@ -68,7 +68,7 @@ namespace www.backupserver.com.Repository
                 throw new InvalidOperationException("User is not authenticated.");
             }
 
-            string url = StaticEndpoint.BaseUrl + $"/BackupJob/GetCompanyBackupJobHistory?id={backupJobId}";
+            string url = StaticEndpoint.BaseUrl + $"/BackupJob/GetCompanyBackupJobHistory?backupJobId={backupJobId}&iPage={iPage}&iTake={iTake}";
             var httpClient = _httpClientFactory.CreateClient("CustomHttpClient");
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 

@@ -93,6 +93,7 @@ namespace BackupApi.Controllers
                 throw;
             }
         }
+
         [HttpGet("GetCompanyBackupJobHistory")]
         [Authorize]
         public async Task<IActionResult> GetCompanyBackupJobHistory(int backupJobId, int iPage, int iTake)
@@ -108,9 +109,9 @@ namespace BackupApi.Controllers
 
                 var sortBy = "backuphistory.\"Id\"";
                 var searchCriteria = " AND backuphistory.\"BackupJobId\" = " + backupJobId + " AND backuphistory.\"CompanyId\" = " + user.CompanyId.ToString(); ;
-                var oBackupHistory = await _backupHistoryServices.GetBackupHistoryByJobId(searchCriteria, iPage, iTake, sortBy);
+                var lBackupHistory = await _backupHistoryServices.GetBackupHistoryByJobId(searchCriteria, iPage, iTake, sortBy);
 
-                return responseHandler.ApiReponseHandler(oBackupHistory);
+                return responseHandler.ApiReponseHandler(lBackupHistory);
             }
             catch (Exception ex)
             {
@@ -174,6 +175,7 @@ namespace BackupApi.Controllers
                     oBackupJob.BackupJobName = oBackupJobParam.BackupJobName;
                     oBackupJob.UpdatedBy = user.Id;
                     oBackupJob.UpdatedDate = DateTime.UtcNow;
+                    oBackupJob.IsUseScheduler = oBackupJobParam.IsUseScheduler;
                     TargetBackup oTargetBackup = await _targetBackupServices.GetTargetBackupByBackupJobId(oBackupJob.Id, user.CompanyId);
                     if (oTargetBackup == null)
                     {
@@ -224,6 +226,7 @@ namespace BackupApi.Controllers
                     {
                         BackupJobName = oBackupJobParam.BackupJobName,
                         CompanyId = user.CompanyId,
+                        IsUseScheduler = oBackupJobParam.IsUseScheduler,
                         StatusId = 1,
                         CreatedBy = user.Id,
                         CreatedDate = DateTime.UtcNow,
